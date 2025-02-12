@@ -74,6 +74,76 @@ This project is a simple social media scheduler that enables CRUD (Create, Read,
 5. **Access API Documentation:**
    - Open your browser and navigate to [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) to interact with the Swagger UI.
 
+
+# Social Media Scheduler
+
+A scalable FastAPI-based application designed to schedule and manage posts across social media platforms. This project integrates Docker for containerization and PostgreSQL for persistent data storage, ensuring smooth deployment and scalability.
+
+---
+
+## Project Structure
+
+```
+/social-media-scheduler
+│
+├── backend/
+│   ├── app/
+│   │   ├── __init__.py
+│   │   └── main.py
+│   └── ...
+│
+├── Dockerfile
+├── docker-compose.yml
+└── requirements.txt
+```
+
+---
+
+## Docker Setup
+
+### Dockerfile
+
+The `Dockerfile` defines how to build the environment for the FastAPI application. It uses Python 3.12 and installs all dependencies from `requirements.txt`.
+
+**Key Steps:**
+- **FROM python:3.12-slim**: Uses a lightweight Python image.
+- **WORKDIR /app**: Sets the working directory in the container.
+- **COPY requirements.txt . & RUN pip install**: Copies and installs dependencies.
+- **COPY ./backend ./backend**: Copies the application code into the container.
+- **EXPOSE 8000**: Exposes port 8000 for the FastAPI app.
+- **CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]**: Runs the FastAPI application using Uvicorn.
+
+### Docker Compose
+
+The `docker-compose.yml` file orchestrates the FastAPI application and PostgreSQL database.
+
+**Services:**
+1. **db (PostgreSQL Database)**:
+    - **image: postgres:13**: Uses PostgreSQL version 13.
+    - **environment**: Sets user credentials and database name.
+    - **ports**: Exposes PostgreSQL on port 5432.
+    - **volumes**: Persists data across container restarts.
+
+2. **api (FastAPI Application)**:
+    - **build: .**: Builds the FastAPI app using the `Dockerfile`.
+    - **command**: Runs Uvicorn to serve the app.
+    - **ports**: Exposes the app on port 8000.
+    - **depends_on**: Ensures the database starts before the app.
+
+### Running the Application
+
+To start both the FastAPI app and the PostgreSQL database:
+
+```bash
+docker-compose up --build
+```
+
+To stop the containers:
+
+```bash
+docker-compose down
+```
+
 ---
 
 ## API Endpoints
