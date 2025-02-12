@@ -17,6 +17,27 @@ A lightweight, FastAPI-powered application that allows users to schedule, manage
 ## Overview
 This project is a simple social media scheduler that enables CRUD (Create, Read, Update, Delete) operations for scheduling posts. It uses **FastAPI** to build a RESTful API with automatic interactive documentation provided by **Swagger UI**.
 
+
+
+## Project Structure
+
+```
+/social-media-scheduler
+│
+├── backend/
+│   ├── app/
+│   │   ├── __init__.py
+│   │   └── main.py
+│   └── ...
+│
+├── Dockerfile
+├── docker-compose.yml
+└── requirements.txt
+```
+
+---
+
+
 ### Key Achievements So Far:
 - **Set Up FastAPI:** Initialized FastAPI and created the first API endpoint.
 - **Built CRUD Endpoints:** Implemented endpoints to create, view, update, and delete scheduled posts.
@@ -81,23 +102,40 @@ A scalable FastAPI-based application designed to schedule and manage posts acros
 
 ---
 
-## Project Structure
+## API Endpoints
 
-```
-/social-media-scheduler
-│
-├── backend/
-│   ├── app/
-│   │   ├── __init__.py
-│   │   └── main.py
-│   └── ...
-│
-├── Dockerfile
-├── docker-compose.yml
-└── requirements.txt
-```
+### 📋 **Root Endpoint**
+- **GET /**  
+  Returns a welcome message to verify the server is running.
+
+### 📅 **Post Management Endpoints**
+
+1. **Create Post**  
+   - **POST /posts/**  
+   - Adds a new scheduled post to the database.
+
+2. **Get All Posts**  
+   - **GET /posts/**  
+   - Retrieves all scheduled posts.
+
+3. **Get Post by ID**  
+   - **GET /posts/{post_id}**  
+   - Retrieves a specific post by ID.
+
+4. **Update Post**  
+   - **PUT /posts/{post_id}**  
+   - Updates an existing scheduled post.
+
+5. **Delete Post**  
+   - **DELETE /posts/{post_id}**  
+   - Deletes a scheduled post by ID.
+  
+
+<img width="1269" alt="Screenshot 2025-02-10 at 6 51 13 PM" src="https://github.com/user-attachments/assets/fbb5a12d-03eb-4e4d-993d-3bf313008ed0" />
+
 
 ---
+
 
 ## Docker Setup
 
@@ -143,41 +181,6 @@ To stop the containers:
 ```bash
 docker-compose down
 ```
-
----
-
-## API Endpoints
-
-### 📋 **Root Endpoint**
-- **GET /**  
-  Returns a welcome message to verify the server is running.
-
-### 📅 **Post Management Endpoints**
-
-1. **Create Post**  
-   - **POST /posts/**  
-   - Adds a new scheduled post to the database.
-
-2. **Get All Posts**  
-   - **GET /posts/**  
-   - Retrieves all scheduled posts.
-
-3. **Get Post by ID**  
-   - **GET /posts/{post_id}**  
-   - Retrieves a specific post by ID.
-
-4. **Update Post**  
-   - **PUT /posts/{post_id}**  
-   - Updates an existing scheduled post.
-
-5. **Delete Post**  
-   - **DELETE /posts/{post_id}**  
-   - Deletes a scheduled post by ID.
-  
-
-<img width="1269" alt="Screenshot 2025-02-10 at 6 51 13 PM" src="https://github.com/user-attachments/assets/fbb5a12d-03eb-4e4d-993d-3bf313008ed0" />
-
-
 
 ---
 
