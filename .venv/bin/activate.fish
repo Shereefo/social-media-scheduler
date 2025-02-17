@@ -33,7 +33,11 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
+<<<<<<< HEAD
 set -gx VIRTUAL_ENV "/Users/shereefmoez/PycharmProjects/social-media-scheduler/pythonProject/social-media-scheduler/.venv"
+=======
+set -gx VIRTUAL_ENV "/Users/shereefmoez/PycharmProjects/social-media-scheduler/.venv"
+>>>>>>> 83f7be4 (Stable version - FastAPI & SQLAlchemy with Docker)
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/bin" $PATH

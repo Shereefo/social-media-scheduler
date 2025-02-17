@@ -42,10 +42,17 @@ deactivate nondestructive
 if [ "$OSTYPE" = "cygwin" ] || [ "$OSTYPE" = "msys" ] ; then
     # transform D:\path\to\venv to /d/path/to/venv on MSYS
     # and to /cygdrive/d/path/to/venv on Cygwin
+<<<<<<< HEAD
     export VIRTUAL_ENV=$(cygpath "/Users/shereefmoez/PycharmProjects/social-media-scheduler/pythonProject/social-media-scheduler/.venv")
 else
     # use the path as-is
     export VIRTUAL_ENV="/Users/shereefmoez/PycharmProjects/social-media-scheduler/pythonProject/social-media-scheduler/.venv"
+=======
+    export VIRTUAL_ENV=$(cygpath "/Users/shereefmoez/PycharmProjects/social-media-scheduler/.venv")
+else
+    # use the path as-is
+    export VIRTUAL_ENV="/Users/shereefmoez/PycharmProjects/social-media-scheduler/.venv"
+>>>>>>> 83f7be4 (Stable version - FastAPI & SQLAlchemy with Docker)
 fi
 
 _OLD_VIRTUAL_PATH="$PATH"

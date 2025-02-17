@@ -9,7 +9,11 @@ alias deactivate 'test $?_OLD_VIRTUAL_PATH != 0 && setenv PATH "$_OLD_VIRTUAL_PA
 # Unset irrelevant variables.
 deactivate nondestructive
 
+<<<<<<< HEAD
 setenv VIRTUAL_ENV "/Users/shereefmoez/PycharmProjects/social-media-scheduler/pythonProject/social-media-scheduler/.venv"
+=======
+setenv VIRTUAL_ENV "/Users/shereefmoez/PycharmProjects/social-media-scheduler/.venv"
+>>>>>>> 83f7be4 (Stable version - FastAPI & SQLAlchemy with Docker)
 
 set _OLD_VIRTUAL_PATH="$PATH"
 setenv PATH "$VIRTUAL_ENV/bin:$PATH"

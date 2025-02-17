@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:13
+    container_name: social-media-scheduler-db
+    environment:
+      POSTGRES_USER: shereef
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: social-media-scheduler
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shereef -d social-media-scheduler"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  api:
+    build: .
+    container_name: social-media-scheduler-api
+    working_dir: /app
+    volumes:
+      - ./backend:/app/backend  # ✅ Ensures backend folder is correctly mapped
+    command: uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy  # ✅ Ensures API starts after DB is ready
+
+volumes:
+  postgres_data:

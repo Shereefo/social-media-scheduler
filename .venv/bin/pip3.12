@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 #!/Users/shereefmoez/PycharmProjects/social-media-scheduler/pythonProject/social-media-scheduler/.venv/bin/python3.12
+=======
+#!/Users/shereefmoez/PycharmProjects/social-media-scheduler/.venv/bin/python3.12
+>>>>>>> 83f7be4 (Stable version - FastAPI & SQLAlchemy with Docker)
 # -*- coding: utf-8 -*-
 import re
 import sys
