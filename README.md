@@ -100,7 +100,8 @@ This project is a social media scheduler that enables CRUD (Create, Read, Update
    - Open [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) to interact with the Swagger UI.
 
 
-<img width="1512" alt="Screenshot 2025-02-16 at 7 26 25 PM" src="https://github.com/user-attachments/assets/7662803b-279a-4c56-8e89-1a2f7c370fbb" />
+<img width="1501" alt="Screenshot 2025-02-16 at 8 21 33 PM" src="https://github.com/user-attachments/assets/6b7d66ae-ce49-430a-92ba-48245db6128a" />
+
 
 ---
 
