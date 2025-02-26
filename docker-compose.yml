@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  api:
+    build: .
+    container_name: social-media-scheduler-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+    environment:
+      - PYTHONPATH=/app
+    # No networks section here - use default
+
+  db:
+    image: postgres:15
+    container_name: social-media-scheduler-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=scheduler
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # No networks section here - use default
+
+volumes:
+  postgres_data:
