@@ -8,19 +8,14 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
-      - upload_data:/app/uploads 
     depends_on:
-      db:
-        condition: service_healthy
+      - db
+    env_file:
+      - .env
     environment:
-      - PYTHONPATH=/app
-      - SECRET_KEY=${SECRET_KEY}
-      - ALGORITHM=${ALGORITHM}
-      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
-      - TIKTOK_CLIENT_KEY=${TIKTOK_CLIENT_KEY}
-      - TIKTOK_CLIENT_SECRET=${TIKTOK_CLIENT_SECRET}
-      - TIKTOK_REDIRECT_URI=${TIKTOK_REDIRECT_URI}
-    restart: always
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/scheduler
+      - SECRET_KEY=your-secret-key-needs-to-be-updated
+      - ALGORITHM=HS256
 
   db:
     image: postgres:15
@@ -33,13 +28,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    restart: always
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
 
 volumes:
   postgres_data:
-  upload_data:
