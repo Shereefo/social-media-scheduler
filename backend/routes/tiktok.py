@@ -17,7 +17,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth/tiktok", tags=["tiktok"])
 
 @router.get("/authorize")
-async def authorize_tiktok(current_user: User = Depends(get_current_active_user)):
+async def authorize_tiktok():
+    # For testing only
     """Get TikTok authorization URL."""
     authorization_url = TikTokAPI.get_authorization_url()
     return {"authorization_url": authorization_url}
