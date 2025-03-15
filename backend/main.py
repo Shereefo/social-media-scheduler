@@ -31,9 +31,29 @@ from .auth import (
 from .tasks import start_scheduler
 from .routes import tiktok, tiktok_posts
 
+# CORS support for frontend
+from fastapi.middleware.cors import CORSMiddleware
+
+# Existing code...
+app = FastAPI(
+    title="Social Media Scheduler API",
+    description="Schedule and manage social media posts",
+    version="0.1.0",
+)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://lovely-kangaroo-628d2a.netlify.app"],  # Your Netlify domain
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all methods (GET, POST, etc.)
+    allow_headers=["*"],  # Allow all headers
+)
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 # Create a lifespan context manager
 @asynccontextmanager

@@ -74,3 +74,37 @@ async def disconnect_tiktok(
     logger.info(f"User {current_user.username} disconnected TikTok account")
     
     return {"message": "TikTok account disconnected successfully"}
+
+@router.post("/exchange-token")
+async def exchange_token(
+    code_data: dict,
+    db: AsyncSession = Depends(get_db)
+):
+    """Exchange authorization code for access token."""
+    try:
+        code = code_data.get("code")
+        if not code:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Authorization code not provided"
+            )
+        
+        # Exchange code for token
+        token_data = await TikTokAPI.exchange_code_for_token(code)
+        
+        # Log the token data 
+        logger.info(f"Received token data from TikTok: {token_data}")
+        
+        # For a complete implementation, you would:
+        # 1. Find or create a user record
+        # 2. Store the tokens with the user
+        # 3. Set expiration times
+        
+        return {"message": "TikTok account connected successfully"}
+        
+    except Exception as e:
+        logger.error(f"Error exchanging token: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to exchange token: {str(e)}"
+        )
