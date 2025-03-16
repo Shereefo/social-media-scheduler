@@ -1,5 +1,5 @@
 import httpx
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -81,7 +81,7 @@ class TikTokAPI:
             
         # Check if token is expired or about to expire
         if (user.tiktok_token_expires_at and 
-            user.tiktok_token_expires_at <= datetime.utcnow() + timedelta(minutes=5)):
+            user.tiktok_token_expires_at <= datetime.now(timezone.utc) + timedelta(minutes=5)):
             
             if not user.tiktok_refresh_token:
                 return None

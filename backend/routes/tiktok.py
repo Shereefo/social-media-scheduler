@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 
 from ..database import get_db
@@ -40,8 +40,7 @@ async def tiktok_callback(
         current_user.tiktok_access_token = token_data["access_token"]
         current_user.tiktok_refresh_token = token_data["refresh_token"]
         current_user.tiktok_open_id = token_data["open_id"]
-        current_user.tiktok_token_expires_at = datetime.utcnow() + timedelta(seconds=token_data["expires_in"])
-        
+        current_user.tiktok_token_expires_at = datetime.now(timezone.utc) + timedelta(seconds=token_data["expires_in"])
         await db.commit()
         await db.refresh(current_user)
         
@@ -80,7 +79,7 @@ async def exchange_token(
     code_data: dict,
     db: AsyncSession = Depends(get_db)
 ):
-    """Exchange authorization code for access token."""
+    """Exchange authorization code for access token and store it."""
     try:
         code = code_data.get("code")
         if not code:
@@ -92,15 +91,40 @@ async def exchange_token(
         # Exchange code for token
         token_data = await TikTokAPI.exchange_code_for_token(code)
         
-        # Log the token data 
+        # Log the token data (remove in production)
         logger.info(f"Received token data from TikTok: {token_data}")
         
-        # For a complete implementation, you would:
-        # 1. Find or create a user record
-        # 2. Store the tokens with the user
-        # 3. Set expiration times
+        # For testing: create or get a test user
+        # In production, you'd use the authenticated user
+        result = await db.execute(select(User).where(User.username == "test_user"))
+        user = result.scalars().first()
         
-        return {"message": "TikTok account connected successfully"}
+        if not user:
+            # Create a test user if none exists
+            user = User(
+                username="test_user",
+                email="test@example.com",
+                hashed_password="not_a_real_password"  # In production, use proper hashing
+            )
+            db.add(user)
+            await db.commit()
+            await db.refresh(user)
+        
+        # Update user with token information
+        user.tiktok_access_token = token_data.get("access_token")
+        user.tiktok_refresh_token = token_data.get("refresh_token")
+        user.tiktok_open_id = token_data.get("open_id")
+        
+        # Modern timezone-aware approach for expiration
+        user.tiktok_token_expires_at = datetime.now(timezone.utc) + timedelta(seconds=token_data.get("expires_in", 0))
+        
+        await db.commit()
+        await db.refresh(user)
+        
+        return {
+            "message": "TikTok account connected successfully",
+            "user_id": user.id
+        }
         
     except Exception as e:
         logger.error(f"Error exchanging token: {str(e)}")
