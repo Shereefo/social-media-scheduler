@@ -93,7 +93,7 @@ class TikTokAPI:
                 # Update user with new token data
                 user.tiktok_access_token = token_data["access_token"]
                 user.tiktok_refresh_token = token_data["refresh_token"]
-                user.tiktok_token_expires_at = datetime.utcnow() + timedelta(seconds=token_data["expires_in"])
+                user.tiktok_token_expires_at = datetime.now(timezone.utc) + timedelta(seconds=token_data["expires_in"])
                 
                 await db.commit()
                 await db.refresh(user)

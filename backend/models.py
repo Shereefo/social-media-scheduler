@@ -41,7 +41,9 @@ class User(Base):
     tiktok_access_token = Column(String, nullable=True)
     tiktok_refresh_token = Column(String, nullable=True) 
     tiktok_open_id = Column(String, nullable=True)
-    tiktok_token_expires_at = Column(DateTime, nullable=True)
+    
+    # Added to explicitly set the timezone
+    tiktok_token_expires_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationship with posts
     posts = relationship("Post", back_populates="user") 

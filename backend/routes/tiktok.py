@@ -41,6 +41,7 @@ async def tiktok_callback(
         current_user.tiktok_refresh_token = token_data["refresh_token"]
         current_user.tiktok_open_id = token_data["open_id"]
         current_user.tiktok_token_expires_at = datetime.now(timezone.utc) + timedelta(seconds=token_data["expires_in"])
+        
         await db.commit()
         await db.refresh(current_user)
         
