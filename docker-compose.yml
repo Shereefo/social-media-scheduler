@@ -10,9 +10,12 @@ services:
       - .:/app
     depends_on:
       - db
+    env_file:
+      - .env
     environment:
-      - PYTHONPATH=/app
-    # No networks section here - use default
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/scheduler
+      - SECRET_KEY=your-secret-key-needs-to-be-updated
+      - ALGORITHM=HS256
 
   db:
     image: postgres:15
@@ -25,7 +28,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    # No networks section here - use default
 
 volumes:
   postgres_data:
