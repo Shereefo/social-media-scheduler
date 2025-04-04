@@ -9,4 +9,4 @@ venv/
 ENV/
 .DS_Store
 postgres_data/
-.env
+.envuploads/
