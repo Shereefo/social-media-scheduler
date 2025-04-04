@@ -11,3 +11,6 @@ ENV/
 postgres_data/
 .envuploads/
 uploads/
+uploads/
+*.mov
+*.mp4
