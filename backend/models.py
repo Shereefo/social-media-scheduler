@@ -16,12 +16,11 @@ class Post(Base):
     platform = Column(String, nullable=True, default="twitter")
     status = Column(String, nullable=False, default="scheduled")  # scheduled, published, failed
 
-    #Add user relationship 
-
+    # Add user relationship 
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     user = relationship("User", back_populates="posts")
 
-    # Add this to backend/models.py, in the Post class
+    # Add video filename
     video_filename = Column(String, nullable=True)
 
 
@@ -46,5 +45,4 @@ class User(Base):
     tiktok_token_expires_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationship with posts
-    posts = relationship("Post", back_populates="user") 
-        
+    posts = relationship("Post", back_populates="user")
