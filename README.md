@@ -1,5 +1,7 @@
 # TikTimer - TikTok Social Media Scheduler 📅
 
+# <img src="https://path-to-your-logo/tiktimer-logo.png" alt="TikTimer Logo" width="60" height="60" style="vertical-align: middle;"> Social Media Scheduler
+
 A scalable FastAPI-based application designed to schedule and manage posts across social media platforms with TikTok integration. This project uses modern async Python with FastAPI, SQLAlchemy for ORM functionality, and JWT-based authentication to provide a secure and responsive API.
 
 ## Table of Contents
@@ -537,17 +539,76 @@ Instructions for deploying to major cloud providers will be added in a future up
 
 ---
 
-## Contributing
+## Implementation Challenges & Solutions
 
-Contributions are welcome! Please follow these steps:
+During the development of the TikTok integration, I encountered several significant challenges. Documenting these issues and their solutions may help others implementing similar OAuth flows.
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/your-feature-name`
-3. Commit your changes: `git commit -m 'Add some feature'`
-4. Push to the branch: `git push origin feature/your-feature-name`
-5. Submit a pull request
+### TikTok OAuth Challenges
 
-Please ensure your code follows the project's style guidelines and includes appropriate tests.
+#### 1. Redirect URI Requirements
+- **Issue**: TikTok rejected localhost URLs for OAuth redirects, preventing local testing
+- **Solution**: Set up a Netlify site with HTTPS for the callback page
+- **Implementation**: Created a static HTML page that handles the OAuth callback, deployed on Netlify
+
+#### 2. Token Storage Timezone Issues
+- **Issue**: Encountered database errors with timezone-aware datetimes
+- **Error**: "can't subtract offset-naive and offset-aware datetimes"
+- **Solution**: 
+  - Created a migration script to update the database column type
+  - Modified the User model to use DateTime(timezone=True)
+  - Updated all datetime handling to be consistently timezone-aware
+- **Code Example**:
+  ```python
+  # Before
+  expires_at = Column(DateTime)
+  
+  # After
+  expires_at = Column(DateTime(timezone=True))
+  ```
+
+#### 3. CORS Limitations
+- **Issue**: Browser security prevented the Netlify callback page from making direct requests to localhost
+- **Solution**: Implemented a manual code exchange process instead of automatic
+- **Implementation**: 
+  - Created a mechanism for users to copy and paste the authorization code
+  - Added an API endpoint specifically for manual code exchange
+
+#### 4. Authentication Challenges
+- **Issue**: Needed to locate and update test user credentials for API authentication
+- **Solution**: Used direct database access to verify and update user information
+- **Implementation**:
+  - Created admin scripts to manage test user accounts
+  - Added logging to track authentication flow
+
+#### 5. Environment Variables and Configuration
+- **Issue**: Initial issues with environment variables not being properly loaded
+- **Solutions**:
+  - Fixed configuration problems with the lifespan parameter in FastAPI setup
+  - Implemented a more robust environment variable loading system
+  - Added validation to ensure all required variables are present
+- **Code Example**:
+  ```python
+  # Check for required environment variables on startup
+  @app.on_event("startup")
+  async def validate_env_vars():
+      required_vars = [
+          "TIKTOK_CLIENT_KEY", 
+          "TIKTOK_CLIENT_SECRET",
+          "TIKTOK_REDIRECT_URI"
+      ]
+      
+      missing = [var for var in required_vars if not os.getenv(var)]
+      if missing:
+          raise ValueError(f"Missing required environment variables: {', '.join(missing)}")
+  ```
+
+These challenges are typical when implementing OAuth integrations, especially when dealing with the complexities of secure authentication flows, timezone handling, and cross-domain communications between different environments (development vs. production).
+
+### Docker Issues
+- Restart Docker: `docker-compose down && docker-compose up --build`
+- Remove Docker volumes to start fresh: `docker-compose down -v`
+- Check Docker logs: `docker-compose logs`
+- Verify Docker and Docker Compose versions are up to date
 
 ---
 
