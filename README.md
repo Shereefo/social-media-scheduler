@@ -1,6 +1,6 @@
 # TikTimer - TikTok Social Media Scheduler 📅
 
-![image alt][(https://github.com/Shereefo/social-media-scheduler/blob/78296927fbbe2bf6776e009486e27fb7976dcc14/TikTimer%20logo.png](https://github.com/Shereefo/social-media-scheduler/blob/main/TikTimer%20logo.png?raw=true))
+![image alt][([https://github.com/Shereefo/social-media-scheduler/blob/78296927fbbe2bf6776e009486e27fb7976dcc14/TikTimer%20logo.png)](https://github.com/Shereefo/social-media-scheduler/blob/bea4c94258fcc33c28c02bfcecad91f0d4533fac/TikTimer%20logo.png))](https://github.com/Shereefo/social-media-scheduler/blob/main/TikTimer%20logo.png?raw=true))
 
 A scalable FastAPI-based application designed to schedule and manage posts across social media platforms with TikTok integration. This project uses modern async Python with FastAPI, SQLAlchemy for ORM functionality, and JWT-based authentication to provide a secure and responsive API.
 
