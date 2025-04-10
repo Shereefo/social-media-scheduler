@@ -341,6 +341,32 @@ async def login_for_access_token(
     logger.info(f"User logged in: {user.username}")
     return {"access_token": access_token, "token_type": "bearer"}
 
+@app.get("/health", tags=["health"])
+async def health_check():
+    """
+    Health check endpoint for monitoring system status.
+    Returns:
+        dict: Status information including version and timestamp
+    """
+    from datetime import datetime, timezone
+    from .database import async_session
+    
+    try:
+        # Try to connect to the database
+        async with async_session() as session:
+            await session.execute("SELECT 1")
+            db_status = "connected"
+    except Exception as e:
+        logger.error(f"Database health check failed: {e}")
+        db_status = "disconnected"
+    
+    return {
+        "status": "healthy",
+        "api_version": app.version,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "database": db_status
+    }
+
 @app.get("/users/me", response_model=UserResponse)
 async def read_users_me(current_user: User = Depends(get_current_active_user)):
     """Get current user information."""
