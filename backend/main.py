@@ -10,6 +10,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, status, BackgroundTasks
 from fastapi.security import OAuth2PasswordRequestForm
 
+# Middleware imports
+from .middleware import error_handling_middleware
+
 # Database imports
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -33,22 +36,6 @@ from .routes import tiktok, tiktok_posts
 
 # CORS support for frontend
 from fastapi.middleware.cors import CORSMiddleware
-
-# Existing code...
-app = FastAPI(
-    title="Social Media Scheduler API",
-    description="Schedule and manage social media posts",
-    version="0.1.0",
-)
-
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["https://lovely-kangaroo-628d2a.netlify.app"],  # Your Netlify domain
-    allow_credentials=True,
-    allow_methods=["*"],  # Allow all methods (GET, POST, etc.)
-    allow_headers=["*"],  # Allow all headers
-)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -95,6 +82,23 @@ app = FastAPI(
     description="Schedule and manage social media posts",
     version="0.1.0",
     lifespan=lifespan
+)
+
+app.middleware("http")(error_handling_middleware)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins =[
+        "https://lovely-kangaroo-628d2a.netlify.app",  # Your Netlify domain
+        "http://localhost:3000",  # React development server
+        "http://localhost:5173",  # Vite development server
+        "http://127.0.0.1:5173",  # Vite on local IP
+        "http://127.0.0.1:3000",  # React on local IP
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all methods (GET, POST, etc.)
+    allow_headers=["*"],  # Allow all headers
 )
 
 # Include the TikTok routers
@@ -362,7 +366,7 @@ async def health_check():
     
     return {
         "status": "healthy",
-        "api_version": app.version,
+        "api_version": "0.1.0",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "database": db_status
     }
