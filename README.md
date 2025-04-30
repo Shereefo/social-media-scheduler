@@ -2,6 +2,12 @@
 
 ![image alt](https://github.com/Shereefo/social-media-scheduler/blob/bea4c94258fcc33c28c02bfcecad91f0d4533fac/TikTimer%20logo.png)
 
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104.0+-005571?style=flat&logo=fastapi)](https://fastapi.tiangolo.com)
+[![Python](https://img.shields.io/badge/Python-3.12+-blue?style=flat&logo=python)](https://python.org)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue?style=flat&logo=postgresql)](https://postgresql.org)
+[![Docker](https://img.shields.io/badge/Docker-20.10+-blue?style=flat&logo=docker)](https://docker.com)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 A scalable FastAPI-based application designed to schedule and manage posts across social media platforms with TikTok integration. This project uses modern async Python with FastAPI, SQLAlchemy for ORM functionality, and JWT-based authentication to provide a secure and responsive API.
 
 ## Table of Contents
@@ -16,9 +22,14 @@ A scalable FastAPI-based application designed to schedule and manage posts acros
 7. [API Endpoints](#api-endpoints)
 8. [Authentication](#authentication)
 9. [TikTok Integration](#tiktok-integration)
-10. [Development Notes](#development-notes)
-11. [Next Steps](#next-steps)
-12. [Troubleshooting](#troubleshooting)
+10. [Database Schema](#database-schema)
+11. [Development Notes](#development-notes)
+12. [Implementation Challenges & Solutions](#implementation-challenges--solutions)
+13. [Project Journey & Development Timeline](#project-journey--development-timeline)
+14. [Deployment Guide](#deployment-guide)
+15. [Troubleshooting](#troubleshooting)
+16. [Next Steps](#next-steps)
+17. [License](#license)
 
 ---
 
@@ -43,6 +54,9 @@ This application provides a RESTful API for scheduling and managing social media
 - **Containerization:** Docker & Docker Compose
 - **API Documentation:** Swagger UI (auto-generated)
 - **Background Tasks:** Async task processing for scheduled posts
+- **Database Migrations:** Alembic for schema versioning
+- **Error Handling:** Middleware-based consistent error handling
+- **Configuration:** Environment-based with pydantic-settings
 
 ---
 
@@ -50,23 +64,41 @@ This application provides a RESTful API for scheduling and managing social media
 
 - **User Management:**
   - Registration and authentication
-  - Secure password handling
+  - Secure password handling with bcrypt
   - JWT token-based sessions
+  - User profile management
 
 - **Post Management:**
   - Create, retrieve, update, and delete posts
   - Schedule posts for future publishing
   - Filter posts by user and platform
+  - Post status tracking (scheduled, published, failed)
 
 - **TikTok Integration:**
   - OAuth authentication flow with TikTok
   - Video upload and publishing
-  - Token refresh handling
+  - Token refresh handling and automatic renewal
+  - Timezone-aware token expiration
+  - Secure storage of platform credentials
+  - API error handling and retry mechanisms
+
+- **File Storage System:**
+  - Local file storage with unique identifiers
+  - Async file operations with aiofiles
+  - Organized upload directory structure
+  - Support for various media formats
 
 - **Scheduling System:**
   - Background task processing
   - Automatic publishing of scheduled content
   - Failure handling and status tracking
+  - Retry mechanisms for failed posts
+
+- **System Health and Monitoring:**
+  - Health check endpoint for monitoring
+  - Database connectivity validation
+  - Exponential backoff for database connection retries
+  - Detailed logging for debugging and auditing
 
 ---
 
@@ -80,6 +112,7 @@ social-media-scheduler/
 │   ├── config.py             # Centralized configuration
 │   ├── database.py           # Database connection
 │   ├── main.py               # FastAPI application
+│   ├── middleware.py         # Custom middleware
 │   ├── models.py             # SQLAlchemy models
 │   ├── schema.py             # Pydantic schemas
 │   ├── storage.py            # File storage system
@@ -91,10 +124,17 @@ social-media-scheduler/
 │   │   ├── __init__.py
 │   │   ├── tiktok.py         # TikTok authentication routes
 │   │   └── tiktok_posts.py   # TikTok post management routes
-├── Dockerfile
-├── docker-compose.yml
-├── requirements.txt
-└── setup.py
+├── migrations/               # Alembic database migrations
+│   ├── versions/             # Migration versions
+│   ├── env.py                # Migration environment
+│   ├── README                # Migration documentation
+│   └── script.py.mako        # Migration template
+├── Dockerfile                # Docker configuration
+├── docker-compose.yml        # Docker Compose setup
+├── requirements.txt          # Python dependencies
+├── alembic.ini               # Alembic configuration
+├── setup.py                  # Package setup
+└── .env.example              # Example environment variables
 ```
 
 ---
@@ -144,7 +184,12 @@ social-media-scheduler/
 
 5. Set up PostgreSQL and update the database connection string in `.env` if needed
 
-6. Run the application:
+6. Run database migrations:
+   ```bash
+   alembic upgrade head
+   ```
+
+7. Run the application:
    ```bash
    uvicorn backend.main:app --reload
    ```
@@ -153,7 +198,7 @@ social-media-scheduler/
 
 ## Environment Variables
 
-Create a `.env` file in the project root with the following variables:
+Create a `.env` file in the project root based on the provided `.env.example`:
 
 ```
 # API Settings
@@ -168,6 +213,11 @@ DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/scheduler
 TIKTOK_CLIENT_KEY=your-tiktok-client-key
 TIKTOK_CLIENT_SECRET=your-tiktok-client-secret
 TIKTOK_REDIRECT_URI=http://localhost:8000/api/v1/auth/tiktok/callback
+
+# AWS Settings (for future deployment)
+# AWS_ACCESS_KEY_ID=your-aws-access-key
+# AWS_SECRET_ACCESS_KEY=your-aws-secret-key
+# AWS_REGION=us-east-1
 ```
 
 ---
@@ -185,11 +235,13 @@ TIKTOK_REDIRECT_URI=http://localhost:8000/api/v1/auth/tiktok/callback
 - `GET /posts/{post_id}` - Get a specific post
 - `PATCH /posts/{post_id}` - Update a post
 - `DELETE /posts/{post_id}` - Delete a post
+- `GET /health` - Check API and database health
 
 ### TikTok Integration
 - `GET /api/v1/auth/tiktok/authorize` - Get TikTok authorization URL
 - `GET /api/v1/auth/tiktok/callback` - Handle TikTok OAuth callback
 - `DELETE /api/v1/auth/tiktok/disconnect` - Disconnect TikTok account
+- `POST /api/v1/auth/tiktok/exchange-token` - Exchange authorization code for token
 - `POST /api/v1/tiktok/posts/` - Create a new TikTok post
 - `POST /api/v1/tiktok/posts/{post_id}/publish` - Manually publish a TikTok post
 
@@ -331,8 +383,10 @@ To use this approach:
    ```bash
    curl -X POST http://localhost:8000/api/v1/tiktok/posts/ \
         -H "Authorization: Bearer <JWT_TOKEN>" \
-        -H "Content-Type: application/json" \
-        -d '{"content":"Check out my new video!", "scheduled_time":"2025-04-10T15:30:00Z", "video_path":"uploads/video.mp4"}'
+        -H "Content-Type: multipart/form-data" \
+        -F "content=Check out my new video!" \
+        -F "scheduled_time=2025-04-10T15:30:00Z" \
+        -F "video=@/path/to/video.mp4"
    ```
 
 2. **Publish Immediately:**
@@ -347,6 +401,23 @@ To use this approach:
 
 The current database schema includes the following tables:
 
+### Users Table
+```
+Table: users
+- id (Integer, Primary Key)
+- username (String, Unique)
+- email (String, Unique)
+- hashed_password (String)
+- is_active (Boolean)
+- is_superuser (Boolean)
+- created_at (DateTime)
+- updated_at (DateTime)
+- tiktok_access_token (String, Nullable)
+- tiktok_refresh_token (String, Nullable)
+- tiktok_open_id (String, Nullable)
+- tiktok_token_expires_at (DateTime with timezone, Nullable)
+```
+
 ### Posts Table
 ```
 Table: posts
@@ -357,27 +428,23 @@ Table: posts
 - updated_at (DateTime)
 - platform (String)
 - status (String) - "scheduled", "published", "failed"
+- user_id (Integer, Foreign Key to users.id)
+- video_filename (String, Nullable)
 ```
 
-### Future Tables (Planned)
-```
-Table: users
-- id (Integer, Primary Key)
-- username (String, Unique)
-- email (String, Unique)
-- hashed_password (String)
-- created_at (DateTime)
-- is_active (Boolean)
+### Database Migration
 
-Table: social_accounts
-- id (Integer, Primary Key)
-- user_id (Integer, Foreign Key)
-- platform (String)
-- access_token (String)
-- refresh_token (String)
-- token_expires_at (DateTime)
-- created_at (DateTime)
-- updated_at (DateTime)
+The project uses Alembic for database migrations:
+
+```bash
+# Generate a new migration
+alembic revision --autogenerate -m "description of changes"
+
+# Apply all pending migrations
+alembic upgrade head
+
+# Revert to a specific migration
+alembic downgrade <revision>
 ```
 
 ---
@@ -403,139 +470,19 @@ This project follows these coding standards:
 ### Error Handling
 
 The application implements a consistent error handling strategy:
+- Custom middleware for centralized error handling
 - HTTP exceptions with appropriate status codes
 - Detailed error messages with proper security considerations
 - Logging of errors with contextual information
 - Database transaction rollback in case of errors
 
----
+### Dependency Injection
 
-## Project Journey & Development Timeline
-
-This project has evolved through several key phases and milestones:
-
-- **Initial Development (2 months ago)**
-  - Added initial version of social media scheduler API
-  - Set up basic FastAPI structure and endpoints
-  - Established core model structure for social media posts
-  - Implemented PostgreSQL integration with SQLAlchemy async ORM
-
-- **TikTok Integration (last month)**
-  - Added TikTok OAuth integration with user authentication
-  - Configured environment variables for TikTok API integration
-  - Created custom OAuth callback page for TikTok authorization
-  - Deployed OAuth callback page to Netlify for production use
-  - Implemented token exchange and storage mechanism
-
-- **Optimization & Fixes (2 weeks ago)**
-  - Fixed timezone handling in TikTok token storage and exchange
-  - Improved error handling for API requests to TikTok
-  - Implemented token refresh mechanism for expired TikTok tokens
-  - Enhanced logging for debugging OAuth flow
-
-- **Recent Additions (yesterday)**
-  - Completed TikTok integration testing with real accounts
-  - Added .gitignore for video files and uploads directory
-  - Fixed edge cases in OAuth error handling
-  - Improved Docker configuration for development environment
-
-- **Documentation (14 hours ago)**
-  - Created initial README.md
-  - Documented API endpoints and TikTok integration process
-  - Added setup instructions for local and Docker environments
-
-This development timeline reflects our iterative approach, with a focus first on core functionality, followed by platform-specific integrations, and continuous improvement based on testing and real-world usage.
-
-## Next Steps
-
-- [ ] Add additional social media platform integrations (Twitter, Instagram, etc.)
-- [ ] Implement analytics for post performance
-- [ ] Create a frontend interface
-- [ ] Add admin dashboard for user management
-- [ ] Implement rate limiting
-- [ ] Add comprehensive test suite
-- [ ] Set up CI/CD pipeline
-- [ ] Add proper user management with roles and permissions
-- [ ] Implement file upload handling for media content
-- [ ] Enhance documentation with examples and usage scenarios
-
----
-
-## Deployment Guide
-
-### Netlify Deployment for TikTok OAuth Callback
-
-The TikTok OAuth callback page is deployed on Netlify for reliable hosting:
-
-1. **Create a Netlify account** at [netlify.com](https://www.netlify.com/)
-
-2. **Deploy the callback page:**
-   - Option 1: Drag and drop the HTML file directly into Netlify's dashboard
-   - Option 2: Push the HTML file to a GitHub repository and connect it to Netlify
-
-3. **Configure domain settings:**
-   - Use the default Netlify subdomain (e.g., `your-app-name.netlify.app`) or
-   - Set up a custom domain in the Netlify dashboard
-
-4. **Update your environment variables:**
-   ```
-   TIKTOK_REDIRECT_URI=https://your-app-name.netlify.app
-   ```
-
-5. **Update TikTok Developer Portal:**
-   - Add the Netlify URL to the allowed redirect URIs in your TikTok application settings
-
-### Production Deployment Options
-
-#### Docker-based Deployment
-
-1. **Clone the repository on your server:**
-   ```bash
-   git clone https://github.com/yourusername/social-media-scheduler.git
-   cd social-media-scheduler
-   ```
-
-2. **Create production .env file with secure credentials**
-
-3. **Start the application:**
-   ```bash
-   docker-compose up -d
-   ```
-
-#### Cloud Deployment (AWS, GCP, Azure)
-
-Instructions for deploying to major cloud providers will be added in a future update.
-
----
-
-## Troubleshooting
-
-### Database Connection Issues
-- Ensure PostgreSQL is running and accessible
-- Check database credentials in your `.env` file
-- Verify that Docker containers are on the same network
-- Examine Docker logs: `docker-compose logs db`
-- Check for database initialization errors: `docker-compose logs api`
-
-### API Connection Issues
-- Verify the API container is running: `docker ps`
-- Check logs for API initialization errors: `docker-compose logs api`
-- Verify that port 8000 is not being used by another application
-- Test a basic endpoint with curl: `curl http://localhost:8000/`
-
-### TikTok Authentication Issues
-- Verify your TikTok API credentials in `.env`
-- Ensure your redirect URI matches what's configured in the TikTok developer console
-- Check application logs for detailed error messages from TikTok API calls
-- Verify scope permissions in your TikTok developer console
-- If the callback page isn't receiving the code, check your browser console for errors
-- Verify the Netlify deployment is working by visiting the URL directly
-
-### Docker Issues
-- Restart Docker: `docker-compose down && docker-compose up --build`
-- Remove Docker volumes to start fresh: `docker-compose down -v`
-- Check Docker logs: `docker-compose logs`
-- Verify Docker and Docker Compose versions are up to date
+The project uses FastAPI's dependency injection system for:
+- Database session management
+- User authentication
+- Authorization checks
+- Configuration loading
 
 ---
 
@@ -604,17 +551,266 @@ During the development of the TikTok integration, I encountered several signific
 
 These challenges are typical when implementing OAuth integrations, especially when dealing with the complexities of secure authentication flows, timezone handling, and cross-domain communications between different environments (development vs. production).
 
+---
+
+## Project Journey & Development Timeline
+
+This project has evolved through several key phases and milestones:
+
+- **Initial Development (2 months ago)**
+  - Added initial version of social media scheduler API
+  - Set up basic FastAPI structure and endpoints
+  - Established core model structure for social media posts
+  - Implemented PostgreSQL integration with SQLAlchemy async ORM
+
+- **TikTok Integration (last month)**
+  - Added TikTok OAuth integration with user authentication
+  - Configured environment variables for TikTok API integration
+  - Created custom OAuth callback page for TikTok authorization
+  - Deployed OAuth callback page to Netlify for production use
+  - Implemented token exchange and storage mechanism
+
+- **Optimization & Fixes (2 weeks ago)**
+  - Fixed timezone handling in TikTok token storage and exchange
+  - Improved error handling for API requests to TikTok
+  - Implemented token refresh mechanism for expired TikTok tokens
+  - Enhanced logging for debugging OAuth flow
+
+- **Recent Additions (yesterday)**
+  - Completed TikTok integration testing with real accounts
+  - Added .gitignore for video files and uploads directory
+  - Fixed edge cases in OAuth error handling
+  - Improved Docker configuration for development environment
+
+- **Documentation (14 hours ago)**
+  - Created initial README.md
+  - Documented API endpoints and TikTok integration process
+  - Added setup instructions for local and Docker environments
+
+This development timeline reflects our iterative approach, with a focus first on core functionality, followed by platform-specific integrations, and continuous improvement based on testing and real-world usage.
+
+---
+
+## Deployment Guide
+
+### Netlify Deployment for TikTok OAuth Callback
+
+The TikTok OAuth callback page is deployed on Netlify for reliable hosting:
+
+1. **Create a Netlify account** at [netlify.com](https://www.netlify.com/)
+
+2. **Deploy the callback page:**
+   - Option 1: Drag and drop the HTML file directly into Netlify's dashboard
+   - Option 2: Push the HTML file to a GitHub repository and connect it to Netlify
+
+3. **Configure domain settings:**
+   - Use the default Netlify subdomain (e.g., `your-app-name.netlify.app`) or
+   - Set up a custom domain in the Netlify dashboard
+
+4. **Update your environment variables:**
+   ```
+   TIKTOK_REDIRECT_URI=https://your-app-name.netlify.app
+   ```
+
+5. **Update TikTok Developer Portal:**
+   - Add the Netlify URL to the allowed redirect URIs in your TikTok application settings
+
+### Production Deployment Options
+
+#### Docker-based Deployment
+
+1. **Clone the repository on your server:**
+   ```bash
+   git clone https://github.com/yourusername/social-media-scheduler.git
+   cd social-media-scheduler
+   ```
+
+2. **Create production .env file with secure credentials**
+
+3. **Start the application:**
+   ```bash
+   docker-compose up -d
+   ```
+
+#### AWS Deployment with Terraform
+
+The TikTimer application can be deployed to AWS using Terraform for infrastructure as code. Here's a deployment checklist:
+
+##### 1. Initial Setup & Infrastructure as Code
+- Install Terraform on development machine
+- Create AWS IAM user with programmatic access for Terraform
+- Set up remote state storage (S3 bucket + DynamoDB for state locking)
+- Create GitHub repository for infrastructure code
+- Create base Terraform configuration (providers, backend, variables)
+
+##### 2. Networking Module Implementation
+- Create VPC resource with appropriate CIDR block
+- Create public subnets in multiple AZs
+- Create private application subnets in multiple AZs
+- Create private database subnets in multiple AZs
+- Set up Internet Gateway for public subnet access
+- Configure NAT Gateways for private subnet outbound access
+- Define appropriate route tables
+- Configure security groups for each component
+
+##### 3. Storage Module Implementation
+- Create S3 bucket for video uploads
+- Configure appropriate S3 bucket policies
+- Set up CORS configuration for frontend access
+- Implement lifecycle policies for cost optimization
+- Ensure proper bucket encryption
+
+##### 4. Database Module Implementation
+- Create DB subnet group for RDS
+- Define RDS PostgreSQL instance
+- Configure Multi-AZ deployment for high availability
+- Set up automated backups and snapshot retention
+- Configure parameter groups for performance optimization
+- Set up appropriate security groups for database access
+
+##### 5. Application Code Updates
+- Update storage.py to use S3 instead of local storage
+- Modify config.py to retrieve parameters from AWS Parameter Store
+- Add boto3 dependency to requirements.txt
+- Update CORS settings to allow access from your ALB domain
+- Adjust health check endpoint for ALB compatibility
+
+##### 6. Container Registry & Build Pipeline
+- Create ECR repository for Docker images
+- Update Dockerfile with necessary AWS configuration
+- Set up GitHub Actions workflow for container builds
+- Create IAM roles for GitHub Actions
+- Test image build and push to ECR
+
+##### 7. Compute Module Implementation
+- Define ECS cluster
+- Create ECS task definition with container configuration
+- Set up ECS service with desired count and scaling policies
+- Configure service discovery if needed
+- Define CloudWatch log groups for container logs
+- Set up task execution and task roles with appropriate permissions
+
+##### 8. Load Balancer Configuration
+- Create Application Load Balancer
+- Configure target groups and health checks
+- Set up security groups for the ALB
+- Define listeners for HTTP/HTTPS traffic
+- Set up path-based routing for API versions
+
+##### 9. Secrets Management
+- Create Parameter Store entries for sensitive configuration
+  - Database credentials
+  - TikTok API keys
+  - JWT secret key
+- Update IAM roles to allow access to these parameters
+
+##### 10. Background Task Processing
+- Configure ECS Scheduled Tasks for your scheduler component
+- Or set up EventBridge rules for time-based task triggering
+- Ensure the background processes have appropriate permissions
+
+##### 11. DNS & SSL Configuration
+- Set up Route 53 hosted zone (if using a custom domain)
+- Create DNS records pointing to your ALB
+- Request an SSL certificate using ACM
+- Configure ALB listeners to use SSL certificate
+
+##### 12. Monitoring & Alerting
+- Create CloudWatch dashboards for key metrics
+- Set up alarms for critical thresholds
+- Configure log metric filters
+- Set up SNS topics for alarm notifications
+
+##### 13. CI/CD Pipeline Completion
+- Update GitHub Actions workflow for end-to-end deployment
+- Create staging environment for testing
+- Implement promotion workflow from staging to production
+- Set up infrastructure validation tests
+
+##### 14. Cost Optimization
+- Review resource utilization after initial deployment
+- Implement auto-scaling based on observed patterns
+- Consider reserved instances for stable workloads
+- Set up AWS Cost Explorer dashboards and budgets
+
+This comprehensive approach ensures a scalable, secure, and maintainable deployment of the TikTimer application on AWS infrastructure.
+
+---
+
+## Troubleshooting
+
+### Database Connection Issues
+- Ensure PostgreSQL is running and accessible
+- Check database credentials in your `.env` file
+- Verify that Docker containers are on the same network
+- Examine Docker logs: `docker-compose logs db`
+- Check for database initialization errors: `docker-compose logs api`
+
+### API Connection Issues
+- Verify the API container is running: `docker ps`
+- Check logs for API initialization errors: `docker-compose logs api`
+- Verify that port 8000 is not being used by another application
+- Test a basic endpoint with curl: `curl http://localhost:8000/`
+
+### TikTok Authentication Issues
+- Verify your TikTok API credentials in `.env`
+- Ensure your redirect URI matches what's configured in the TikTok developer console
+- Check application logs for detailed error messages from TikTok API calls
+- Verify scope permissions in your TikTok developer console
+- If the callback page isn't receiving the code, check your browser console for errors
+- Verify the Netlify deployment is working by visiting the URL directly
+- Check that CORS is properly configured in your FastAPI application:
+  ```python
+  app.add_middleware(
+      CORSMiddleware,
+      allow_origins=["https://your-netlify-app.netlify.app", "http://localhost:3000"],
+      allow_credentials=True,
+      allow_methods=["*"],
+      allow_headers=["*"],
+  )
+  ```
+
 ### Docker Issues
 - Restart Docker: `docker-compose down && docker-compose up --build`
 - Remove Docker volumes to start fresh: `docker-compose down -v`
 - Check Docker logs: `docker-compose logs`
 - Verify Docker and Docker Compose versions are up to date
 
+### Alembic Migration Issues
+- Check that your alembic.ini file points to the correct database URL
+- Verify that all model changes are imported in the migrations/env.py file
+- For complex migrations, consider writing manual migration scripts
+
 ---
 
-## License
+## Current Project Status
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+The project is currently in active development with the following components implemented:
+- ✅ Core API framework with FastAPI
+- ✅ Database models and migrations with SQLAlchemy and Alembic
+- ✅ User authentication system
+- ✅ TikTok OAuth integration
+- ✅ Post scheduling and management
+- ✅ File upload and storage system
+- ✅ Background task processing
+- ✅ Docker containerization
+- ✅ Error handling middleware
+- ✅ Health check endpoints
+
+## Next Steps
+
+- [ ] Add additional social media platform integrations (Twitter, Instagram, etc.)
+- [ ] Implement analytics for post performance
+- [ ] Create a frontend interface using React or Vue.js
+- [ ] Add admin dashboard for user management
+- [ ] Implement rate limiting and request throttling
+- [ ] Add comprehensive test suite (unit, integration, E2E)
+- [ ] Set up CI/CD pipeline with GitHub Actions
+- [ ] Migrate file storage from local to S3 for production
+- [ ] Add proper user management with roles and permissions
+- [ ] Implement advanced scheduling features (recurring posts, post series)
+- [ ] Enhance documentation with examples and usage scenarios
+- [ ] Deploy to AWS using Terraform infrastructure as code
 
 ---
 
