@@ -6,6 +6,7 @@
 [![Python](https://img.shields.io/badge/Python-3.12+-blue?style=flat&logo=python)](https://python.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue?style=flat&logo=postgresql)](https://postgresql.org)
 [![Docker](https://img.shields.io/badge/Docker-20.10+-blue?style=flat&logo=docker)](https://docker.com)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 A scalable FastAPI-based application designed to schedule and manage posts across social media platforms with TikTok integration. This project uses modern async Python with FastAPI, SQLAlchemy for ORM functionality, and JWT-based authentication to provide a secure and responsive API.
 
@@ -26,9 +27,13 @@ A scalable FastAPI-based application designed to schedule and manage posts acros
 12. [Implementation Challenges & Solutions](#implementation-challenges--solutions)
 13. [Project Journey & Development Timeline](#project-journey--development-timeline)
 14. [Deployment Guide](#deployment-guide)
-15. [Troubleshooting](#troubleshooting)
-16. [Next Steps](#next-steps)
-
+    - [Netlify Deployment for TikTok OAuth Callback](#netlify-deployment-for-tiktok-oauth-callback)
+    - [Docker-based Deployment](#docker-based-deployment)
+    - [Cloud Infrastructure](#cloud-infrastructure)
+15. [Current Project Status](#current-project-status)
+16. [Troubleshooting](#troubleshooting)
+17. [Next Steps](#next-steps)
+18. [License](#license)
 
 ---
 
@@ -614,9 +619,7 @@ The TikTok OAuth callback page is deployed on Netlify for reliable hosting:
 5. **Update TikTok Developer Portal:**
    - Add the Netlify URL to the allowed redirect URIs in your TikTok application settings
 
-### Production Deployment Options
-
-#### Docker-based Deployment
+### Docker-based Deployment
 
 1. **Clone the repository on your server:**
    ```bash
@@ -631,108 +634,207 @@ The TikTok OAuth callback page is deployed on Netlify for reliable hosting:
    docker-compose up -d
    ```
 
-#### AWS Deployment with Terraform
+### Cloud Infrastructure with AWS and Terraform
 
-The TikTimer application can be deployed to AWS using Terraform for infrastructure as code. Here's a deployment checklist:
+TikTimer's cloud infrastructure is built on AWS using Terraform for Infrastructure as Code (IaC). This approach ensures consistent, reproducible deployments and simplifies infrastructure management. The infrastructure is designed to be scalable, secure, and cost-efficient.
 
-##### 1. Initial Setup & Infrastructure as Code
-- Install Terraform on development machine
-- Create AWS IAM user with programmatic access for Terraform
-- Set up remote state storage (S3 bucket + DynamoDB for state locking)
-- Create GitHub repository for infrastructure code
-- Create base Terraform configuration (providers, backend, variables)
+### Infrastructure Architecture
 
-##### 2. Networking Module Implementation
-- Create VPC resource with appropriate CIDR block
-- Create public subnets in multiple AZs
-- Create private application subnets in multiple AZs
-- Create private database subnets in multiple AZs
-- Set up Internet Gateway for public subnet access
-- Configure NAT Gateways for private subnet outbound access
-- Define appropriate route tables
-- Configure security groups for each component
+Our AWS infrastructure consists of the following components:
 
-##### 3. Storage Module Implementation
-- Create S3 bucket for video uploads
-- Configure appropriate S3 bucket policies
-- Set up CORS configuration for frontend access
-- Implement lifecycle policies for cost optimization
-- Ensure proper bucket encryption
+#### Networking
+- VPC with public and private subnets across multiple Availability Zones
+- Internet Gateway for public subnet internet access
+- NAT Gateway (cost-optimized with a single instance) for private subnet outbound traffic
+- Route Tables for controlling traffic flow
+- Security Groups for network traffic control
+- VPC Endpoints for S3 and DynamoDB to reduce data transfer costs
 
-##### 4. Database Module Implementation
-- Create DB subnet group for RDS
-- Define RDS PostgreSQL instance
-- Configure Multi-AZ deployment for high availability
-- Set up automated backups and snapshot retention
-- Configure parameter groups for performance optimization
-- Set up appropriate security groups for database access
+#### Database
+- RDS PostgreSQL for persistent data storage
+- Database Subnet Group in private subnets for security
+- Parameter Group for database configuration
+- Security Group restricting access to the application tier only
 
-##### 5. Application Code Updates
-- Update storage.py to use S3 instead of local storage
-- Modify config.py to retrieve parameters from AWS Parameter Store
-- Add boto3 dependency to requirements.txt
-- Update CORS settings to allow access from your ALB domain
-- Adjust health check endpoint for ALB compatibility
+#### Storage
+- S3 Bucket for video uploads and media storage
+- Server-side encryption for data protection
+- Lifecycle policies for cost-efficient storage management
+- CORS configuration for frontend access
 
-##### 6. Container Registry & Build Pipeline
-- Create ECR repository for Docker images
-- Update Dockerfile with necessary AWS configuration
-- Set up GitHub Actions workflow for container builds
-- Create IAM roles for GitHub Actions
-- Test image build and push to ECR
+#### Compute
+- ECS Fargate for containerized application deployment
+- Task Definition for the FastAPI application
+- ECS Service for managing container deployment
+- Application Load Balancer for traffic distribution
+- Target Groups for routing requests to containers
+- IAM Roles with appropriate permissions
 
-##### 7. Compute Module Implementation
-- Define ECS cluster
-- Create ECS task definition with container configuration
-- Set up ECS service with desired count and scaling policies
-- Configure service discovery if needed
-- Define CloudWatch log groups for container logs
-- Set up task execution and task roles with appropriate permissions
+#### Security
+- Security Groups for network isolation
+- IAM Roles following the principle of least privilege
+- Encryption for data at rest and in transit
+- Private Subnets for sensitive resources
 
-##### 8. Load Balancer Configuration
-- Create Application Load Balancer
-- Configure target groups and health checks
-- Set up security groups for the ALB
-- Define listeners for HTTP/HTTPS traffic
-- Set up path-based routing for API versions
+### Terraform Implementation
 
-##### 9. Secrets Management
-- Create Parameter Store entries for sensitive configuration
-  - Database credentials
-  - TikTok API keys
-  - JWT secret key
-- Update IAM roles to allow access to these parameters
+The infrastructure is defined as code using Terraform and organized into modular components:
 
-##### 10. Background Task Processing
-- Configure ECS Scheduled Tasks for your scheduler component
-- Or set up EventBridge rules for time-based task triggering
-- Ensure the background processes have appropriate permissions
+```
+tiktimer-infrastructure/
+├── terraform-backend/       # Terraform state backend
+├── modules/                 # Terraform modules
+│   ├── networking/          # VPC, subnets, security groups
+│   ├── database/            # RDS PostgreSQL
+│   ├── storage/             # S3 buckets
+│   ├── compute/             # ECS, ALB
+│   └── security/            # Additional security resources
+├── main.tf                  # Main Terraform configuration
+├── variables.tf             # Input variables
+├── outputs.tf               # Output values
+└── terraform.tfvars         # Variable values
+```
 
-##### 11. DNS & SSL Configuration
-- Set up Route 53 hosted zone (if using a custom domain)
-- Create DNS records pointing to your ALB
-- Request an SSL certificate using ACM
-- Configure ALB listeners to use SSL certificate
+### Module Details
 
-##### 12. Monitoring & Alerting
-- Create CloudWatch dashboards for key metrics
-- Set up alarms for critical thresholds
-- Configure log metric filters
-- Set up SNS topics for alarm notifications
+#### Networking Module
+- Creates VPC with CIDR block 10.0.0.0/16
+- Provisions public and private subnets across availability zones
+- Sets up Internet Gateway and NAT Gateway
+- Configures route tables for each subnet tier
+- Implements security groups for web, application, and database tiers
+- Creates VPC Endpoints for S3 and DynamoDB
 
-##### 13. CI/CD Pipeline Completion
-- Update GitHub Actions workflow for end-to-end deployment
-- Create staging environment for testing
-- Implement promotion workflow from staging to production
-- Set up infrastructure validation tests
+#### Database Module
+- Provisions RDS PostgreSQL instance
+- Creates database subnet group in private subnets
+- Sets up parameter group for PostgreSQL configuration
+- Implements security group allowing access only from application tier
+- Configures backups and storage settings
 
-##### 14. Cost Optimization
-- Review resource utilization after initial deployment
-- Implement auto-scaling based on observed patterns
-- Consider reserved instances for stable workloads
-- Set up AWS Cost Explorer dashboards and budgets
+#### Storage Module
+- Creates S3 bucket for video uploads
+- Implements server-side encryption
+- Sets up lifecycle policies for cost management
+- Configures CORS for frontend access
+- Blocks public access for security
 
-This comprehensive approach ensures a scalable, secure, and maintainable deployment of the TikTimer application on AWS infrastructure.
+#### Compute Module
+- Creates ECS Fargate cluster
+- Defines task definition for the FastAPI application
+- Sets up ECS service with desired task count
+- Provisions Application Load Balancer in public subnets
+- Configures target groups and health checks
+- Implements IAM roles for task execution and task permissions
+
+#### Security Module
+- Creates additional security resources
+- Implements WAF for web application protection (optional)
+- Sets up GuardDuty for threat detection (optional)
+- Configures Security Hub for security standards compliance (optional)
+
+### Cost Optimization
+
+Several cost optimization measures have been implemented:
+
+- **Single NAT Gateway**: Using one NAT Gateway instead of one per AZ (saves ~$65-70/month)
+- **Free VPC Endpoints**: S3 and DynamoDB endpoints to reduce NAT Gateway data transfer costs
+- **Right-sized Resources**: Appropriate instance sizes for development environment
+- **Lifecycle Policies**: Automatic transition to cheaper storage classes for older data
+- **Fargate Spot (planned)**: For non-critical workloads to reduce compute costs
+
+### Deployment Instructions
+
+#### Prerequisites
+- AWS CLI configured with appropriate credentials
+- Terraform v1.5.0+ installed
+- Git for version control
+
+#### Setting Up the Backend
+First, set up the Terraform backend for state management:
+
+```bash
+# Clone the repository
+git clone https://github.com/Shereefo/social-media-scheduler.git
+cd social-media-scheduler/tiktimer-infrastructure/terraform-backend
+
+# Initialize and apply Terraform
+terraform init
+terraform apply
+```
+
+#### Deploying the Main Infrastructure
+After setting up the backend, deploy the main infrastructure:
+
+```bash
+# Navigate to the main infrastructure directory
+cd ..
+
+# Initialize Terraform with the S3 backend
+terraform init
+
+# Review the execution plan
+terraform plan
+
+# Apply the configuration
+terraform apply
+```
+
+#### Clean Up Resources
+To avoid ongoing charges when not using the infrastructure:
+
+```bash
+terraform destroy
+```
+
+### Implementation Challenges & Solutions
+
+During the implementation of the AWS infrastructure with Terraform, we encountered and solved several challenges:
+
+#### NAT Gateway Cost Management
+- **Challenge**: NAT Gateways are relatively expensive ($32-35/month per gateway).
+- **Solution**: Implemented a single NAT Gateway architecture, reducing costs by approximately 66% compared to one per AZ, while maintaining reasonable availability for development.
+
+#### Terraform State Management
+- **Challenge**: Team collaboration on infrastructure code requires shared state.
+- **Solution**: Set up S3 backend with DynamoDB locking, allowing multiple team members to work on the infrastructure safely.
+
+#### Database Security
+- **Challenge**: Ensuring the database is not exposed to the public internet.
+- **Solution**: Placed RDS in private subnets and configured security groups to only allow connections from the application tier.
+
+#### Container Configuration
+- **Challenge**: Passing sensitive configuration securely to containers.
+- **Solution**: Used AWS Systems Manager Parameter Store for secrets and configured the ECS task definition to retrieve them securely at runtime.
+
+### Future Enhancements
+
+The following infrastructure components are planned for future implementation:
+
+#### CI/CD Pipeline
+- GitHub Actions workflow for automated deployments
+- Staging and production environments
+- Infrastructure validation tests
+
+#### Advanced Monitoring
+- CloudWatch dashboards for key metrics
+- CloudWatch alarms for critical thresholds
+- Log metric filters for application insights
+
+#### DNS and SSL
+- Route 53 for domain management
+- ACM for SSL/TLS certificates
+- HTTPS enforcement
+
+#### Enhanced Security
+- WAF for web application protection
+- GuardDuty for threat detection
+- Security Hub for compliance monitoring
+
+#### Cost Management
+- Reserved Instances for production workloads
+- Auto-scaling based on usage patterns
+- Scheduled scaling for predictable workloads
 
 ---
 
@@ -810,7 +912,3 @@ The project is currently in active development with the following components imp
 - [ ] Implement advanced scheduling features (recurring posts, post series)
 - [ ] Enhance documentation with examples and usage scenarios
 - [ ] Deploy to AWS using Terraform infrastructure as code
-
----
-
-This project is designed to provide a solid foundation for a production-ready social media scheduling application with secure authentication and TikTok integration.
