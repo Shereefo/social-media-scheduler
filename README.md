@@ -32,7 +32,6 @@ A scalable FastAPI-based application designed to schedule and manage posts acros
 15. [Current Project Status](#current-project-status)
 16. [Troubleshooting](#troubleshooting)
 17. [Next Steps](#next-steps)
-18. [License](#license)
 
 ---
 
@@ -132,6 +131,17 @@ social-media-scheduler/
 │   ├── env.py                # Migration environment
 │   ├── README                # Migration documentation
 │   └── script.py.mako        # Migration template
+├── tiktimer-infrastructure/  # Terraform infrastructure as code
+│   ├── modules/              # Terraform modules
+│   │   ├── networking/       # VPC, subnets, security groups
+│   │   ├── database/         # RDS PostgreSQL configuration
+│   │   ├── storage/          # S3 buckets and policies
+│   │   ├── compute/          # ECS Fargate and ALB
+│   │   └── security/         # WAF, GuardDuty, Security Hub
+│   ├── main.tf               # Main Terraform configuration
+│   ├── variables.tf          # Input variables
+│   ├── outputs.tf            # Output values
+│   └── providers.tf          # AWS provider configuration
 ├── Dockerfile                # Docker configuration
 ├── docker-compose.yml        # Docker Compose setup
 ├── requirements.txt          # Python dependencies
@@ -896,6 +906,7 @@ The project is currently in active development with the following components imp
 - ✅ Docker containerization
 - ✅ Error handling middleware
 - ✅ Health check endpoints
+- ✅ AWS infrastructure code with Terraform modules
 
 ## Next Steps
 
@@ -911,3 +922,8 @@ The project is currently in active development with the following components imp
 - [ ] Implement advanced scheduling features (recurring posts, post series)
 - [ ] Enhance documentation with examples and usage scenarios
 - [ ] Deploy to AWS using Terraform infrastructure as code
+
+
+---
+
+This project is designed to provide a solid foundation for a production-ready social media scheduling application with secure authentication and TikTok integration.
