@@ -6,6 +6,7 @@
 [![Python](https://img.shields.io/badge/Python-3.12+-blue?style=flat&logo=python)](https://python.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue?style=flat&logo=postgresql)](https://postgresql.org)
 [![Docker](https://img.shields.io/badge/Docker-20.10+-blue?style=flat&logo=docker)](https://docker.com)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 A scalable FastAPI-based application designed to schedule and manage posts across social media platforms with TikTok integration. This project uses modern async Python with FastAPI, SQLAlchemy for ORM functionality, and JWT-based authentication to provide a secure and responsive API.
 
@@ -32,12 +33,21 @@ A scalable FastAPI-based application designed to schedule and manage posts acros
 15. [Current Project Status](#current-project-status)
 16. [Troubleshooting](#troubleshooting)
 17. [Next Steps](#next-steps)
+18. [License](#license)
 
 ---
 
 ## Project Overview
 
 This application provides a RESTful API for scheduling and managing social media posts. It uses modern asynchronous Python with FastAPI and SQLAlchemy for database operations. The entire application is containerized with Docker for easy deployment and development.
+
+### **Inspiration & Motivation**
+
+As a TikTok creator and social media enthusiast, I noticed a significant gap in the market for TikTok-specific scheduling tools. While platforms like Instagram and Twitter had numerous scheduling solutions, TikTok creators were left manually posting content or using generic tools that didn't integrate properly with TikTok's unique API requirements.
+
+Having a passion for optimizing systems and streamlining workflows, I saw this as the perfect opportunity to solve a real pain point in the creator economy. The challenge of building a robust OAuth integration with TikTok's API, combined with the need for reliable scheduling infrastructure, made this an ideal project to showcase full-stack development skills while creating something genuinely useful for the creator community.
+
+This project represents the intersection of my interests in social media, system optimization, and modern web development practices.
 
 ### **Key Features:**
 - User authentication with JWT tokens
@@ -910,20 +920,26 @@ The project is currently in active development with the following components imp
 
 ## Next Steps
 
-- [ ] Add additional social media platform integrations (Twitter, Instagram, etc.)
-- [ ] Implement analytics for post performance
-- [ ] Create a frontend interface using React or Vue.js
-- [ ] Add admin dashboard for user management
-- [ ] Implement rate limiting and request throttling
-- [ ] Add comprehensive test suite (unit, integration, E2E)
+### Phase 1: Core Infrastructure & Operations
 - [ ] Set up CI/CD pipeline with GitHub Actions
 - [ ] Migrate file storage from local to S3 for production
-- [ ] Add proper user management with roles and permissions
-- [ ] Implement advanced scheduling features (recurring posts, post series)
-- [ ] Enhance documentation with examples and usage scenarios
-- [ ] Deploy to AWS using Terraform infrastructure as code
+- [ ] Add comprehensive test suite (unit, integration, E2E)
+- [ ] Implement rate limiting and request throttling
+- [ ] Optimize AWS infrastructure costs and implement auto-scaling
 
+### Phase 2: User Experience & Frontend
+- [ ] Create a frontend interface using React or Vue.js
+- [ ] Add proper user management with roles and permissions
+- [ ] Add admin dashboard for user management
+- [ ] Enhance documentation with examples and usage scenarios
+
+### Phase 3: Feature Expansion
+- [ ] Implement advanced scheduling features (recurring posts, post series)
+- [ ] Add additional social media platform integrations (Twitter, Instagram, etc.)
+- [ ] Implement analytics for post performance
 
 ---
 
-This project is designed to provide a solid foundation for a production-ready social media scheduling application with secure authentication and TikTok integration.
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
