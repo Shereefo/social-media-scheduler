@@ -7,6 +7,7 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue?style=flat&logo=postgresql)](https://postgresql.org)
 [![Docker](https://img.shields.io/badge/Docker-20.10+-blue?style=flat&logo=docker)](https://docker.com)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 A scalable FastAPI-based application designed to schedule and manage posts across social media platforms with TikTok integration. This project uses modern async Python with FastAPI, SQLAlchemy for ORM functionality, and JWT-based authentication to provide a secure and responsive API.
 
@@ -943,3 +944,4 @@ The project is currently in active development with the following components imp
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
