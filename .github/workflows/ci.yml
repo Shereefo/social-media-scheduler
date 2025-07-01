@@ -1,0 +1,125 @@
+name: TikTimer CI Pipeline 
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+
+  push:
+    branches: [ main ]
+
+
+jobs: 
+  
+  # Job1: Test Python code 
+  test:
+    name: Test Python code
+    runs-on: ubuntu-latest 
+
+    steps: 
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # Set up python
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12' 
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip 
+        pip install -r requirements.txt 
+        # Install development tools 
+        pip install pytest black flake8 mypy bandit 
+      
+    - name: Check code formatting with Black
+      run: | 
+          echo "Checking if code is properly formatted"
+          black --check --diff backend/ 
+
+    - name: Lint with Flake8 
+      run: | 
+        echo "Checking code style and quality ..."
+        flake8 backend/ --count --show-source --statistics 
+        flake8 backend/ --count --max-complexity=10 --statistics
+
+    - name: Security scan with bandit 
+      run: | 
+        echo "Scanning for security issues..."
+        bandit -r backend/ -f json -o bandit-report.json || true
+        bandit -r backend/
+
+    - name: Run tests with pytest
+      run: | 
+        echo "Running tests..."
+        pytest backend/ -v --tb=short
+      env:
+        DATABASE_URL: sqlite:///./test.db
+        SECRET_KEY: test-secret-key-for-ci
+        TIKTOK_CLIENT_KEY: Test-key
+        TIKTOK_CLIENT_SECRET: test-secret
+
+  # Job2: Validate Terraform      
+  terraform-validate:
+    name: Validate Terraform
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3 
+        with: 
+          terraform_version: 1.5.0 
+
+      - name: Terraform format check
+        run: | 
+          cd tiktimer-infrastructure
+          echo "Checking Terraform formatting"
+          terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        run: | 
+          cd tiktimer-infrastructure
+          echo "Initializing Terraform"
+          terraform init -backend=false
+          echo "Validating terraform configuration"
+          terraform validate 
+
+  # Job3: Build and test Docker image
+  docker-test: 
+    name: Test Docker Build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4 
+
+    - name: Build Docker image
+      run: | 
+        echo "Testing Docker build"
+        docker build -t tiktimer-test:latest . 
+
+    - name: Test container startup
+      run: | 
+        echo "Testing if container starts properly"
+        # Starting container in background
+        docker run -d --name test-container \
+        -e DATABASE_URL=sqlite:///./test.db \
+        -e SECRET_KEY=test-key \
+        tiktimer-test:latest 
+
+        # Wait a few seconds for startup 
+        sleep 10 
+
+        if docker ps | grep test-container; then 
+          echo "Container started successfully"
+        else
+          echo "container failed to start successfully"
+          docker logs test-container
+          exit 1 
+        fi 
+
+        docker stop test-container
+        docker rm test-container
