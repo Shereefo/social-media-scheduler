@@ -1,17 +1,17 @@
 # Create ECS Cluster 
 resource "aws_ecs_cluster" "main" {
-    name = "${var.project_name}-${var.environment}-cluster"
+  name = "${var.project_name}-${var.environment}-cluster"
 
-    setting {
-      name = "containerInsights"
-      value = "enabled"
-    }
+  setting {
+    name  = "containerInsights"
+    value = "enabled"
+  }
 
-    tags = {
-        name = "${var.project_name}-${var.environment}-cluster"
-        environment = var.environment
-    }
-  
+  tags = {
+    name        = "${var.project_name}-${var.environment}-cluster"
+    environment = var.environment
+  }
+
 }
 
 
@@ -82,7 +82,7 @@ resource "aws_ecs_task_definition" "app" {
       name      = "${var.project_name}-${var.environment}-container"
       image     = var.container_image
       essential = true
-      
+
       portMappings = [
         {
           containerPort = var.container_port
@@ -90,7 +90,7 @@ resource "aws_ecs_task_definition" "app" {
           protocol      = "tcp"
         }
       ]
-      
+
       environment = [
         {
           name  = "ENVIRONMENT"
@@ -101,22 +101,22 @@ resource "aws_ecs_task_definition" "app" {
           value = tostring(var.container_port)
         }
       ]
-      
+
       environment = [
-  {
-    name  = "ENVIRONMENT"
-    value = var.environment
-  },
-  {
-    name  = "PORT"
-    value = tostring(var.container_port)
-  },
-  {
-    name  = "DATABASE_URL"
-    value = var.database_url
-  }
-]
-      
+        {
+          name  = "ENVIRONMENT"
+          value = var.environment
+        },
+        {
+          name  = "PORT"
+          value = tostring(var.container_port)
+        },
+        {
+          name  = "DATABASE_URL"
+          value = var.database_url
+        }
+      ]
+
       logConfiguration = {
         logDriver = "awslogs"
         options = {
@@ -153,7 +153,7 @@ resource "aws_lb" "main" {
   security_groups    = [aws_security_group.alb.id]
   subnets            = var.public_subnet_ids
 
-  enable_deletion_protection = false  # Set to true in production
+  enable_deletion_protection = false # Set to true in production
 
   tags = {
     Name        = "${var.project_name}-${var.environment}-alb"
@@ -297,7 +297,7 @@ resource "aws_appautoscaling_policy" "cpu" {
     predefined_metric_specification {
       predefined_metric_type = "ECSServiceAverageCPUUtilization"
     }
-    target_value       = 70  # Target 70% CPU utilization
+    target_value       = 70 # Target 70% CPU utilization
     scale_in_cooldown  = 300
     scale_out_cooldown = 60
   }
@@ -316,7 +316,7 @@ resource "aws_appautoscaling_policy" "memory" {
     predefined_metric_specification {
       predefined_metric_type = "ECSServiceAverageMemoryUtilization"
     }
-    target_value       = 70  # Target 70% memory utilization
+    target_value       = 70 # Target 70% memory utilization
     scale_in_cooldown  = 300
     scale_out_cooldown = 60
   }

@@ -2,7 +2,7 @@
 
 # WAF Web ACL for protection against common web exploits
 resource "aws_wafv2_web_acl" "main" {
-  count = var.enable_waf ? 1 : 0
+  count       = var.enable_waf ? 1 : 0
   name        = "${var.project_name}-${var.environment}-web-acl"
   description = "Web ACL for ${var.project_name}-${var.environment}"
   scope       = "REGIONAL"
@@ -138,7 +138,7 @@ resource "aws_wafv2_ip_set" "allowed_ips" {
 
 # Associate WAF with ALB (if enabled)
 resource "aws_wafv2_web_acl_association" "main" {
-  count = var.enable_waf ? 1 : 0
+  count        = var.enable_waf ? 1 : 0
   resource_arn = var.alb_arn
   web_acl_arn  = aws_wafv2_web_acl.main[0].arn
 }
@@ -146,9 +146,9 @@ resource "aws_wafv2_web_acl_association" "main" {
 # Enable GuardDuty for threat detection
 resource "aws_guardduty_detector" "main" {
   count = var.enable_guardduty ? 1 : 0
-  
+
   enable = true
-  
+
   tags = {
     Name        = "${var.project_name}-${var.environment}-guardduty"
     Environment = var.environment
@@ -163,10 +163,10 @@ resource "aws_securityhub_account" "main" {
 # Enable AWS Config (required for Security Hub)
 resource "aws_config_configuration_recorder" "main" {
   count = var.enable_security_hub ? 1 : 0
-  
+
   name     = "${var.project_name}-${var.environment}-config-recorder"
   role_arn = aws_iam_role.config_role[0].arn
-  
+
   recording_group {
     all_supported = true
   }
@@ -175,9 +175,9 @@ resource "aws_config_configuration_recorder" "main" {
 # IAM role for AWS Config
 resource "aws_iam_role" "config_role" {
   count = var.enable_security_hub ? 1 : 0
-  
+
   name = "${var.project_name}-${var.environment}-config-role"
-  
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -190,7 +190,7 @@ resource "aws_iam_role" "config_role" {
       }
     ]
   })
-  
+
   tags = {
     Name        = "${var.project_name}-${var.environment}-config-role"
     Environment = var.environment
@@ -200,7 +200,7 @@ resource "aws_iam_role" "config_role" {
 # Attach AWS Config policy to the role
 resource "aws_iam_role_policy_attachment" "config_policy" {
   count = var.enable_security_hub ? 1 : 0
-  
+
   role       = aws_iam_role.config_role[0].name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSConfigRole"
 }
@@ -208,9 +208,9 @@ resource "aws_iam_role_policy_attachment" "config_policy" {
 # S3 bucket for AWS Config recordings
 resource "aws_s3_bucket" "config" {
   count = var.enable_security_hub ? 1 : 0
-  
+
   bucket = "${var.project_name}-${var.environment}-config-${data.aws_caller_identity.current.account_id}"
-  
+
   tags = {
     Name        = "${var.project_name}-${var.environment}-config"
     Environment = var.environment
@@ -220,20 +220,20 @@ resource "aws_s3_bucket" "config" {
 # AWS Config delivery channel
 resource "aws_config_delivery_channel" "main" {
   count = var.enable_security_hub ? 1 : 0
-  
+
   name           = "${var.project_name}-${var.environment}-config-delivery"
   s3_bucket_name = aws_s3_bucket.config[0].bucket
-  
+
   depends_on = [aws_config_configuration_recorder.main]
 }
 
 # Enable AWS Config recorder
 resource "aws_config_configuration_recorder_status" "main" {
   count = var.enable_security_hub ? 1 : 0
-  
+
   name       = aws_config_configuration_recorder.main[0].name
   is_enabled = true
-  
+
   depends_on = [aws_config_delivery_channel.main]
 }
 

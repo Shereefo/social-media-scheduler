@@ -1,34 +1,34 @@
 variable "aws_region" {
-    description = "AWS region to deploy resources"
-    type        = string
-    default     = "us-east-2"
-    
+  description = "AWS region to deploy resources"
+  type        = string
+  default     = "us-east-2"
+
 }
 
 variable "environment" {
-    description = "Deployment environment (dev/staging/prod)"
-    type = string
-    default = "dev"
+  description = "Deployment environment (dev/staging/prod)"
+  type        = string
+  default     = "dev"
 }
 
 variable "project_name" {
-    description = "Name of project"
-    type = string
-    default = "TikTimer"
+  description = "Name of project"
+  type        = string
+  default     = "TikTimer"
 }
 
 # Networking variables
 variable "vpc_cidr" {
-    description = "CIDR block for the VPC"
-    type = string
-    default = "10.0.0.0/16"
+  description = "CIDR block for the VPC"
+  type        = string
+  default     = "10.0.0.0/16"
 }
 
 variable "availability_zones" {
-    description = "List of availability zones to use"
-    type = list(string)
-    default = ["us-east-2a", "us-east-2b", "us-east-2c"]
-  
+  description = "List of availability zones to use"
+  type        = list(string)
+  default     = ["us-east-2a", "us-east-2b", "us-east-2c"]
+
 }
 
 variable "public_subnet_cidrs" {
@@ -59,7 +59,7 @@ variable "single_nat_gateway" {
 variable "db_instance_class" {
   description = "Instance class for the database"
   type        = string
-  default     = "db.t3.micro"  # Cost-efficient option for development
+  default     = "db.t3.micro" # Cost-efficient option for development
 }
 
 variable "db_name" {
@@ -78,13 +78,13 @@ variable "db_password" {
   description = "Password for the database"
   type        = string
   sensitive   = true
-  default     = ""  # Will generate a random password if not provided
+  default     = "" # Will generate a random password if not provided
 }
 
 variable "db_multi_az" {
   description = "Whether to deploy a multi-AZ database"
   type        = bool
-  default     = false  # Set to false for development to save costs
+  default     = false # Set to false for development to save costs
 }
 
 # Compute Variables
@@ -121,7 +121,7 @@ variable "enable_autoscaling" {
 variable "container_image" {
   description = "Docker image for the container"
   type        = string
-  default     = "public.ecr.aws/nginx/nginx:latest"  # Default to nginx for testing
+  default     = "public.ecr.aws/nginx/nginx:latest" # Default to nginx for testing
 }
 
 variable "health_check_path" {
@@ -186,7 +186,7 @@ variable "enable_waf" {
 variable "allowed_ip_ranges" {
   description = "List of IP ranges allowed to access the application"
   type        = list(string)
-  default     = ["0.0.0.0/0"]  # Open to all by default
+  default     = ["0.0.0.0/0"] # Open to all by default
 }
 
 variable "enable_guardduty" {

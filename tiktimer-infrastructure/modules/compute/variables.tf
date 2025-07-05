@@ -9,7 +9,7 @@ variable "environment" {
 }
 
 variable "aws_region" {
-  description = "AWS region" 
+  description = "AWS region"
   type        = string
 }
 
@@ -108,7 +108,7 @@ variable "health_check_unhealthy_threshold" {
 variable "container_image" {
   description = "Docker image for the container"
   type        = string
-  default     = "public.ecr.aws/nginx/nginx:latest"  # Default to nginx for testing
+  default     = "public.ecr.aws/nginx/nginx:latest" # Default to nginx for testing
 }
 
 variable "database_url" {

@@ -28,7 +28,7 @@ variable "alb_arn" {
 variable "allowed_ip_ranges" {
   description = "List of IP ranges allowed to access the application"
   type        = list(string)
-  default     = ["0.0.0.0/0"]  # Open to all by default
+  default     = ["0.0.0.0/0"] # Open to all by default
 }
 
 variable "enable_guardduty" {

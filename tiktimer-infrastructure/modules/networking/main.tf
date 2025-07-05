@@ -166,7 +166,7 @@ resource "aws_vpc_endpoint" "s3" {
     aws_route_table.app[*].id,
     aws_route_table.db[*].id
   )
-  
+
   tags = {
     Name        = "${var.project_name}-${var.environment}-s3-endpoint"
     Environment = var.environment
@@ -182,7 +182,7 @@ resource "aws_vpc_endpoint" "dynamodb" {
     aws_route_table.app[*].id,
     aws_route_table.db[*].id
   )
-  
+
   tags = {
     Name        = "${var.project_name}-${var.environment}-dynamodb-endpoint"
     Environment = var.environment

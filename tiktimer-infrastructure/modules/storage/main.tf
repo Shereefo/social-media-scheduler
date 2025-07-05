@@ -11,7 +11,7 @@ resource "aws_s3_bucket" "uploads" {
 # Enable versioning if specified
 resource "aws_s3_bucket_versioning" "uploads" {
   bucket = aws_s3_bucket.uploads.id
-  
+
   versioning_configuration {
     status = var.enable_versioning ? "Enabled" : "Suspended"
   }
@@ -49,7 +49,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "uploads" {
     content {
       id     = rule.value.id
       status = rule.value.enabled ? "Enabled" : "Disabled"
-      
+
       filter {
         prefix = rule.value.prefix
       }
@@ -77,7 +77,7 @@ resource "aws_s3_bucket_cors_configuration" "uploads" {
   cors_rule {
     allowed_headers = ["*"]
     allowed_methods = ["GET", "PUT", "POST", "DELETE"]
-    allowed_origins = ["*"]  # In production, you'd restrict this to your domain
+    allowed_origins = ["*"] # In production, you'd restrict this to your domain
     expose_headers  = ["ETag"]
     max_age_seconds = 3000
   }
