@@ -9,9 +9,8 @@ on:
     branches: [ main ]
 
 
-jobs: 
-  
- # Job1: Test Python code 
+jobs:
+  # Job1: Test Python code 
   test:
     name: Test Python code
     runs-on: ubuntu-latest 

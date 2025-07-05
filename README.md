@@ -1,11 +1,20 @@
 # TikTimer - TikTok Social Media Scheduler 📅
 
+<<<<<<< HEAD
+=======
+> **Note:** This project currently focuses on production-ready backend services and AWS infrastructure. The frontend interface is planned for Phase 2 development - this showcase demonstrates cloud architecture, API development, and DevOps practices.
+
+>>>>>>> 22bed3b494bea48b92b32be87cf750fbff532488
 ![image alt](https://github.com/Shereefo/social-media-scheduler/blob/bea4c94258fcc33c28c02bfcecad91f0d4533fac/TikTimer%20logo.png)
 
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104.0+-005571?style=flat&logo=fastapi)](https://fastapi.tiangolo.com)
 [![Python](https://img.shields.io/badge/Python-3.12+-blue?style=flat&logo=python)](https://python.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue?style=flat&logo=postgresql)](https://postgresql.org)
 [![Docker](https://img.shields.io/badge/Docker-20.10+-blue?style=flat&logo=docker)](https://docker.com)
+<<<<<<< HEAD
+=======
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+>>>>>>> 22bed3b494bea48b92b32be87cf750fbff532488
 
 A scalable FastAPI-based application designed to schedule and manage posts across social media platforms with TikTok integration. This project uses modern async Python with FastAPI, SQLAlchemy for ORM functionality, and JWT-based authentication to provide a secure and responsive API.
 
@@ -40,6 +49,17 @@ A scalable FastAPI-based application designed to schedule and manage posts acros
 
 This application provides a RESTful API for scheduling and managing social media posts. It uses modern asynchronous Python with FastAPI and SQLAlchemy for database operations. The entire application is containerized with Docker for easy deployment and development.
 
+<<<<<<< HEAD
+=======
+### **Inspiration & Motivation**
+
+As a TikTok creator and social media enthusiast, I noticed a significant gap in the market for TikTok-specific scheduling tools. While platforms like Instagram and Twitter had numerous scheduling solutions, TikTok creators were left manually posting content or using generic tools that didn't integrate properly with TikTok's unique API requirements.
+
+Having a passion for optimizing systems and streamlining workflows, I saw this as the perfect opportunity to solve a real pain point in the creator economy. The challenge of building a robust OAuth integration with TikTok's API, combined with the need for reliable scheduling infrastructure, made this an ideal project to showcase full-stack development skills while creating something genuinely useful for the creator community.
+
+This project represents the intersection of my interests in social media, system optimization, and modern web development practices.
+
+>>>>>>> 22bed3b494bea48b92b32be87cf750fbff532488
 ### **Key Features:**
 - User authentication with JWT tokens
 - Post scheduling and management 
@@ -132,6 +152,20 @@ social-media-scheduler/
 │   ├── env.py                # Migration environment
 │   ├── README                # Migration documentation
 │   └── script.py.mako        # Migration template
+<<<<<<< HEAD
+=======
+├── tiktimer-infrastructure/  # Terraform infrastructure as code
+│   ├── modules/              # Terraform modules
+│   │   ├── networking/       # VPC, subnets, security groups
+│   │   ├── database/         # RDS PostgreSQL configuration
+│   │   ├── storage/          # S3 buckets and policies
+│   │   ├── compute/          # ECS Fargate and ALB
+│   │   └── security/         # WAF, GuardDuty, Security Hub
+│   ├── main.tf               # Main Terraform configuration
+│   ├── variables.tf          # Input variables
+│   ├── outputs.tf            # Output values
+│   └── providers.tf          # AWS provider configuration
+>>>>>>> 22bed3b494bea48b92b32be87cf750fbff532488
 ├── Dockerfile                # Docker configuration
 ├── docker-compose.yml        # Docker Compose setup
 ├── requirements.txt          # Python dependencies
@@ -579,14 +613,21 @@ This project has evolved through several key phases and milestones:
   - Implemented token refresh mechanism for expired TikTok tokens
   - Enhanced logging for debugging OAuth flow
 
+<<<<<<< HEAD
 - **Recent Additions (yesterday)**
+=======
+- **Recent Additions**
+>>>>>>> 22bed3b494bea48b92b32be87cf750fbff532488
   - Completed TikTok integration testing with real accounts
   - Added .gitignore for video files and uploads directory
   - Fixed edge cases in OAuth error handling
   - Improved Docker configuration for development environment
+<<<<<<< HEAD
 
 - **Documentation (14 hours ago)**
   - Created initial README.md
+=======
+>>>>>>> 22bed3b494bea48b92b32be87cf750fbff532488
   - Documented API endpoints and TikTok integration process
   - Added setup instructions for local and Docker environments
 
@@ -896,6 +937,7 @@ The project is currently in active development with the following components imp
 - ✅ Docker containerization
 - ✅ Error handling middleware
 - ✅ Health check endpoints
+<<<<<<< HEAD
 
 ## Next Steps
 
@@ -911,3 +953,32 @@ The project is currently in active development with the following components imp
 - [ ] Implement advanced scheduling features (recurring posts, post series)
 - [ ] Enhance documentation with examples and usage scenarios
 - [ ] Deploy to AWS using Terraform infrastructure as code
+=======
+- ✅ AWS infrastructure code with Terraform modules
+
+## Next Steps
+
+### Phase 1: Core Infrastructure & Operations
+- [ ] Set up CI/CD pipeline with GitHub Actions
+- [ ] Migrate file storage from local to S3 for production
+- [ ] Add comprehensive test suite (unit, integration, E2E)
+- [ ] Implement rate limiting and request throttling
+- [ ] Optimize AWS infrastructure costs and implement auto-scaling
+
+### Phase 2: User Experience & Frontend
+- [ ] Create a frontend interface using React or Vue.js
+- [ ] Add proper user management with roles and permissions
+- [ ] Add admin dashboard for user management
+- [ ] Enhance documentation with examples and usage scenarios
+
+### Phase 3: Feature Expansion
+- [ ] Implement advanced scheduling features (recurring posts, post series)
+- [ ] Add additional social media platform integrations (Twitter, Instagram, etc.)
+- [ ] Implement analytics for post performance
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+>>>>>>> 22bed3b494bea48b92b32be87cf750fbff532488
