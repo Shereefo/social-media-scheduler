@@ -1,16 +1,19 @@
 variable "project_name" {
   description = "Name of the project"
   type        = string
+  default     = "TikTimer"
 }
 
 variable "environment" {
   description = "Deployment environment (e.g., dev, staging, prod)"
   type        = string
+  default     = "dev"
 }
 
 variable "aws_region" {
   description = "AWS region"
   type        = string
+  default     = "us-east-2"
 }
 
 variable "vpc_id" {
@@ -115,4 +118,5 @@ variable "database_url" {
   description = "Database connection URL"
   type        = string
   sensitive   = true
+  default     = ""
 }

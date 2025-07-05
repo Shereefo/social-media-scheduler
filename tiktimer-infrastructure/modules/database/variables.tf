@@ -1,11 +1,13 @@
 variable "project_name" {
   description = "Name of the project"
   type        = string
+  default     = "TikTimer"
 }
 
 variable "environment" {
   description = "Deployment environment"
   type        = string
+  default     = "dev"
 }
 
 variable "db_subnet_ids" {
@@ -40,6 +42,7 @@ variable "db_password" {
   description = "Password for the DB"
   type        = string
   sensitive   = true
+  default     = ""
 }
 
 variable "db_allocated_storage" {
@@ -88,4 +91,5 @@ variable "database_url" {
   description = "Database connection URL"
   type        = string
   sensitive   = true
+  default     = ""
 }
