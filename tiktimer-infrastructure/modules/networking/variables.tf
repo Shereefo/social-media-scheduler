@@ -8,22 +8,25 @@ variable "vpc_cidr" {
 variable "project_name" {
   description = "Name of project"
   type        = string
+  default     = "tiktimer"
 }
 
 variable "environment" {
   description = "Deployment environment"
   type        = string
-
+  default     = "dev"
 }
 
 variable "aws_region" {
   description = "AWS region"
   type        = string
+  default     = "us-east-2"
 }
 
 variable "availability_zones" {
   description = "AZs within the AWS region"
   type        = list(string)
+  default     = ["us-east-2a", "us-east-2b"]
 }
 
 variable "public_subnet_cidrs" {
