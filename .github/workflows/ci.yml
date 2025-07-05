@@ -1,3 +1,4 @@
+
 name: TikTimer CI Pipeline 
 
 on:
@@ -10,7 +11,7 @@ on:
 
 jobs: 
   
-  # Job1: Test Python code 
+ # Job1: Test Python code 
   test:
     name: Test Python code
     runs-on: ubuntu-latest 
@@ -87,6 +88,8 @@ jobs:
           echo "Validating terraform configuration"
           terraform validate 
 
+
+  
   # Job3: Build and test Docker image
   docker-test: 
     name: Test Docker Build
@@ -96,11 +99,13 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4 
 
+    
     - name: Build Docker image
       run: | 
         echo "Testing Docker build"
         docker build -t tiktimer-test:latest . 
 
+    
     - name: Test container startup
       run: | 
         echo "Testing if container starts properly"
@@ -123,3 +128,15 @@ jobs:
 
         docker stop test-container
         docker rm test-container
+        
+
+
+
+    
+    
+
+
+
+
+
+
