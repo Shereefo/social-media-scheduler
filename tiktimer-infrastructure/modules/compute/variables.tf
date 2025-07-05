@@ -19,21 +19,25 @@ variable "aws_region" {
 variable "vpc_id" {
   description = "ID of the VPC"
   type        = string
+  default     = ""
 }
 
 variable "app_subnet_ids" {
   description = "List of application subnet IDs"
   type        = list(string)
+  default     = []
 }
 
 variable "public_subnet_ids" {
   description = "List of public subnet IDs"
   type        = list(string)
+  default     = []
 }
 
 variable "app_security_group_id" {
   description = "Security group ID for the application"
   type        = string
+  default     = ""
 }
 
 variable "container_port" {

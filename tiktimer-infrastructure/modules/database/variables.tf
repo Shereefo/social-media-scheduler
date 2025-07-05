@@ -13,11 +13,13 @@ variable "environment" {
 variable "db_subnet_ids" {
   description = "List of subnet IDs for the DB"
   type        = list(string)
+  default     = []
 }
 
 variable "db_security_group_id" {
   description = "Security group ID for the DB"
   type        = string
+  default     = ""
 }
 
 variable "db_instance_class" {
