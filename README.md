@@ -1,6 +1,5 @@
 # TikTimer - TikTok Social Media Scheduler 📅
 
-=======
 > **Note:** This project currently focuses on production-ready backend services and AWS infrastructure. The frontend interface is planned for Phase 2 development - this showcase demonstrates cloud architecture, API development, and DevOps practices.
 
 ![image alt](https://github.com/Shereefo/social-media-scheduler/blob/bea4c94258fcc33c28c02bfcecad91f0d4533fac/TikTimer%20logo.png)
@@ -46,7 +45,6 @@ A scalable FastAPI-based application designed to schedule and manage posts acros
 This application provides a RESTful API for scheduling and managing social media posts. It uses modern asynchronous Python with FastAPI and SQLAlchemy for database operations. The entire application is containerized with Docker for easy deployment and development.
 
 
-=======
 ### **Inspiration & Motivation**
 
 As a TikTok creator and social media enthusiast, I noticed a significant gap in the market for TikTok-specific scheduling tools. While platforms like Instagram and Twitter had numerous scheduling solutions, TikTok creators were left manually posting content or using generic tools that didn't integrate properly with TikTok's unique API requirements.
