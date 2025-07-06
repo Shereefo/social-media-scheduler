@@ -40,8 +40,8 @@ jobs:
     - name: Lint with Flake8 
       run: | 
         echo "Checking code style and quality ..."
-        flake8 backend/ --count --show-source --statistics 
-        flake8 backend/ --count --max-complexity=10 --statistics
+        flake8 backend/ --count --show-source --statistics --max-line-length=88
+        flake8 backend/ --count --max-complexity=10 --statistics --max-line-length=88
 
     - name: Security scan with bandit 
       run: | 
