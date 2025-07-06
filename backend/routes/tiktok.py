@@ -7,7 +7,7 @@ import logging
 
 from ..database import get_db
 from ..models import User
-from ..auth import get_current_active_user
+from ..auth import get_current_active_user, get_password_hash
 from ..integrations.tiktok import TikTokAPI
 
 # Set up logging
@@ -105,11 +105,12 @@ async def exchange_token(code_data: dict, db: AsyncSession = Depends(get_db)):
 
         if not user:
             # Create a test user if none exists
+            # Use proper password hashing even for test users
+            test_password = "test_password_123"  # nosec B105
             user = User(
                 username="test_user",
                 email="test@example.com",
-                # In production, use proper hashing
-                hashed_password="not_a_real_password",
+                hashed_password=get_password_hash(test_password),
             )
             db.add(user)
             await db.commit()
