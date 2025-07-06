@@ -71,9 +71,7 @@ async def lifespan(app: FastAPI):
             await asyncio.sleep(wait_time)
 
     if retry_count == max_retries:
-        logger.error(
-            "Failed to connect to the database after multiple attempts"
-        )
+        logger.error("Failed to connect to the database after multiple attempts")
         raise Exception("Database connection failed")
 
     # Start the scheduler
@@ -123,11 +121,7 @@ async def root():
 
 
 # Create - Schedule a new post
-@app.post(
-    "/posts/",
-    response_model=PostResponse,
-    status_code=status.HTTP_201_CREATED
-)
+@app.post("/posts/", response_model=PostResponse, status_code=status.HTTP_201_CREATED)
 async def create_post(
     post: PostCreate,
     db: AsyncSession = Depends(get_db),
@@ -195,9 +189,7 @@ async def get_post(
     try:
         # Update the query to filter by user_id and post_id
         result = await db.execute(
-            select(Post).where(
-                Post.id == post_id, Post.user_id == current_user.id
-            )
+            select(Post).where(Post.id == post_id, Post.user_id == current_user.id)
         )
         post = result.scalars().first()
 
@@ -237,9 +229,7 @@ async def update_post(
     try:
         # Update the query to filter by user_id and post_id
         result = await db.execute(
-            select(Post).where(
-                Post.id == post_id, Post.user_id == current_user.id
-            )
+            select(Post).where(Post.id == post_id, Post.user_id == current_user.id)
         )
         post = result.scalars().first()
 
@@ -289,9 +279,7 @@ async def delete_post(
     try:
         # Update the query to filter by user_id and post_id
         result = await db.execute(
-            select(Post).where(
-                Post.id == post_id, Post.user_id == current_user.id
-            )
+            select(Post).where(Post.id == post_id, Post.user_id == current_user.id)
         )
         post = result.scalars().first()
 
@@ -341,9 +329,7 @@ async def register_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
         # Create new user
         hashed_password = get_password_hash(user.password)
         db_user = User(
-            email=user.email,
-            username=user.username,
-            hashed_password=hashed_password
+            email=user.email, username=user.username, hashed_password=hashed_password
         )
         db.add(db_user)
         await db.commit()
@@ -365,8 +351,7 @@ async def register_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
 
 @app.post("/token", response_model=Token)
 async def login_for_access_token(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: AsyncSession = Depends(get_db)
+    form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)
 ):
     """Login to get access token."""
     user = await authenticate_user(db, form_data.username, form_data.password)
@@ -376,9 +361,7 @@ async def login_for_access_token(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token_expires = timedelta(
-        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
-    )
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )

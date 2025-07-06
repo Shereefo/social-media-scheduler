@@ -46,10 +46,7 @@ class TikTokAPI:
             if response.status_code != 200:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=(
-                        f"Failed to exchange code for token: "
-                        f"{response.text}"
-                    ),
+                    detail=(f"Failed to exchange code for token: " f"{response.text}"),
                 )
 
             return response.json()
@@ -77,9 +74,7 @@ class TikTokAPI:
             return response.json()
 
     @staticmethod
-    async def ensure_valid_token(
-        db: AsyncSession, user: User
-    ) -> Optional[str]:
+    async def ensure_valid_token(db: AsyncSession, user: User) -> Optional[str]:
         """Ensure the user has a valid TikTok token."""
         if not user.tiktok_access_token:
             return None
@@ -96,17 +91,13 @@ class TikTokAPI:
 
             # Refresh the token
             try:
-                token_data = await TikTokAPI.refresh_token(
-                    user.tiktok_refresh_token
-                )
+                token_data = await TikTokAPI.refresh_token(user.tiktok_refresh_token)
 
                 # Update user with new token data
                 user.tiktok_access_token = token_data["access_token"]
                 user.tiktok_refresh_token = token_data["refresh_token"]
-                user.tiktok_token_expires_at = (
-                    datetime.now(timezone.utc) + timedelta(
-                        seconds=token_data["expires_in"]
-                    )
+                user.tiktok_token_expires_at = datetime.now(timezone.utc) + timedelta(
+                    seconds=token_data["expires_in"]
                 )
 
                 await db.commit()
@@ -143,12 +134,7 @@ class TikTokAPI:
             init_response = await client.post(
                 f"{TikTokAPI.BASE_URL}/video/init/",
                 headers={"Authorization": f"Bearer {access_token}"},
-                json={
-                    "post_info": {
-                        "title": caption,
-                        "privacy_level": "PUBLIC"
-                    }
-                },
+                json={"post_info": {"title": caption, "privacy_level": "PUBLIC"}},
             )
 
             if init_response.status_code != 200:

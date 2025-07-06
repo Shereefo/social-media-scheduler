@@ -29,10 +29,7 @@ async def error_handling_middleware(request: Request, call_next):
 
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={
-                "detail": "A database error occurred",
-                "type": "database_error"
-            },
+            content={"detail": "A database error occurred", "type": "database_error"},
         )
 
     except Exception as e:
@@ -42,8 +39,5 @@ async def error_handling_middleware(request: Request, call_next):
 
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={
-                "detail": "An unexpected error occurred",
-                "type": "server_error"
-            },
+            content={"detail": "An unexpected error occurred", "type": "server_error"},
         )
