@@ -30,7 +30,9 @@ jobs:
         python -m pip install --upgrade pip 
         pip install -r requirements.txt 
         # Install development tools 
-        pip install pytest black flake8 mypy bandit 
+        pip install pytest black flake8 mypy bandit
+        # Install additional test dependencies
+        pip install pytest-asyncio httpx 
       
     - name: Check code formatting with Black
       run: | 
