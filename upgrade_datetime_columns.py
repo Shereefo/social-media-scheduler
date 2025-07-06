@@ -13,9 +13,15 @@ async def upgrade_database():
     async with engine.begin() as conn:
         # Alter the column to support timezone
         await conn.execute(
-            text('ALTER TABLE users ALTER COLUMN tiktok_token_expires_at TYPE TIMESTAMP WITH TIME ZONE')
+            text(
+                'ALTER TABLE users ALTER COLUMN tiktok_token_expires_at '
+                'TYPE TIMESTAMP WITH TIME ZONE'
+            )
         )
-        print("Successfully updated tiktok_token_expires_at column to TIMESTAMP WITH TIME ZONE")
+        print(
+            "Successfully updated tiktok_token_expires_at column "
+            "to TIMESTAMP WITH TIME ZONE"
+        )
 
 if __name__ == "__main__":
     asyncio.run(upgrade_database())
