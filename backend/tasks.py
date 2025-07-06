@@ -33,21 +33,16 @@ async def check_and_publish_scheduled_posts():
                     video_content = await get_file_content(post.video_filename)
 
                     # Publish to TikTok
-                    await TikTokAPI.post_video(
-                        db, user, video_content, post.content
-                    )
+                    await TikTokAPI.post_video(db, user, video_content, post.content)
 
                     # Update post status
                     post.status = "published"
                     await db.commit()
 
-                    logger.info(
-                        f"Published scheduled TikTok post with ID: {post.id}"
-                    )
+                    logger.info(f"Published scheduled TikTok post with ID: {post.id}")
                 except Exception as e:
                     logger.error(
-                        f"Error publishing scheduled TikTok post "
-                        f"{post.id}: {e}"
+                        f"Error publishing scheduled TikTok post " f"{post.id}: {e}"
                     )
 
                     # Update post status to failed

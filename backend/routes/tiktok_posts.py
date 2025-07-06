@@ -1,7 +1,5 @@
 # backend/routes/tiktok_posts.py
-from fastapi import (
-    APIRouter, Depends, HTTPException, status, File, UploadFile, Form
-)
+from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 import logging

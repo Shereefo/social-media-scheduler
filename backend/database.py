@@ -8,9 +8,7 @@ DATABASE_URL = "postgresql+asyncpg://postgres:postgres@db:5432/scheduler"
 engine = create_async_engine(DATABASE_URL, echo=True)
 
 # Create session factory
-async_session = sessionmaker(
-    engine, class_=AsyncSession, expire_on_commit=False
-)
+async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 # Create base class for declarative models
 Base = declarative_base()
