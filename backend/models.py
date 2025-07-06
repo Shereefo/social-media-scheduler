@@ -1,4 +1,6 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey
+from sqlalchemy import (
+    Column, Integer, String, Text, DateTime, Boolean, ForeignKey
+)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
@@ -11,7 +13,9 @@ class Post(Base):
     content = Column(Text, nullable=False)
     scheduled_time = Column(DateTime, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )
 
     # You can add platform-specific fields here
     platform = Column(String, nullable=True, default="twitter")
@@ -37,7 +41,9 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     is_superuser = Column(Boolean, default=False)
     created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )
 
     # TikTok integration fields
     tiktok_access_token = Column(String, nullable=True)

@@ -42,8 +42,10 @@ async def tiktok_callback(
         current_user.tiktok_access_token = token_data["access_token"]
         current_user.tiktok_refresh_token = token_data["refresh_token"]
         current_user.tiktok_open_id = token_data["open_id"]
-        current_user.tiktok_token_expires_at = datetime.now(timezone.utc) + timedelta(
-            seconds=token_data["expires_in"]
+        current_user.tiktok_token_expires_at = (
+            datetime.now(timezone.utc) + timedelta(
+                seconds=token_data["expires_in"]
+            )
         )
 
         await db.commit()
@@ -100,7 +102,9 @@ async def exchange_token(code_data: dict, db: AsyncSession = Depends(get_db)):
 
         # For testing: create or get a test user
         # In production, you'd use the authenticated user
-        result = await db.execute(select(User).where(User.username == "test_user"))
+        result = await db.execute(
+            select(User).where(User.username == "test_user")
+        )
         user = result.scalars().first()
 
         if not user:
@@ -108,7 +112,8 @@ async def exchange_token(code_data: dict, db: AsyncSession = Depends(get_db)):
             user = User(
                 username="test_user",
                 email="test@example.com",
-                hashed_password="not_a_real_password",  # In production, use proper hashing
+                # In production, use proper hashing
+                hashed_password="not_a_real_password",
             )
             db.add(user)
             await db.commit()
@@ -127,7 +132,10 @@ async def exchange_token(code_data: dict, db: AsyncSession = Depends(get_db)):
         await db.commit()
         await db.refresh(user)
 
-        return {"message": "TikTok account connected successfully", "user_id": user.id}
+        return {
+            "message": "TikTok account connected successfully",
+            "user_id": user.id
+        }
 
     except Exception as e:
         logger.error(f"Error exchanging token: {str(e)}")

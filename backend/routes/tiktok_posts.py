@@ -1,14 +1,15 @@
 # backend/routes/tiktok_posts.py
-from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Form
+from fastapi import (
+    APIRouter, Depends, HTTPException, status, File, UploadFile, Form
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from typing import List
 import logging
 from datetime import datetime
 
 from ..database import get_db
 from ..models import User, Post
-from ..schema import PostCreate, PostResponse
+from ..schema import PostResponse
 from ..auth import get_current_active_user
 from ..integrations.tiktok import TikTokAPI
 from ..storage import save_upload, get_file_content
@@ -55,7 +56,8 @@ async def create_tiktok_post(
         await db.refresh(post)
 
         logger.info(
-            f"Created TikTok post with ID: {post.id} for user: {current_user.username}"
+            f"Created TikTok post with ID: {post.id} "
+            f"for user: {current_user.username}"
         )
 
         return post

@@ -2,7 +2,6 @@ import httpx
 from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
 from typing import Dict, Optional, Any
 
 from ..models import User
@@ -47,7 +46,8 @@ class TikTokAPI:
             if response.status_code != 200:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Failed to exchange code for token: {response.text}",
+                    detail=f"Failed to exchange code for token: "
+                           f"{response.text}",
                 )
 
             return response.json()
@@ -75,7 +75,9 @@ class TikTokAPI:
             return response.json()
 
     @staticmethod
-    async def ensure_valid_token(db: AsyncSession, user: User) -> Optional[str]:
+    async def ensure_valid_token(
+        db: AsyncSession, user: User
+    ) -> Optional[str]:
         """Ensure the user has a valid TikTok token."""
         if not user.tiktok_access_token:
             return None
@@ -92,19 +94,23 @@ class TikTokAPI:
 
             # Refresh the token
             try:
-                token_data = await TikTokAPI.refresh_token(user.tiktok_refresh_token)
+                token_data = await TikTokAPI.refresh_token(
+                    user.tiktok_refresh_token
+                )
 
                 # Update user with new token data
                 user.tiktok_access_token = token_data["access_token"]
                 user.tiktok_refresh_token = token_data["refresh_token"]
-                user.tiktok_token_expires_at = datetime.now(timezone.utc) + timedelta(
-                    seconds=token_data["expires_in"]
+                user.tiktok_token_expires_at = (
+                    datetime.now(timezone.utc) + timedelta(
+                        seconds=token_data["expires_in"]
+                    )
                 )
 
                 await db.commit()
                 await db.refresh(user)
 
-            except Exception as e:
+            except Exception:
                 # If refresh fails, the user needs to re-authenticate
                 return None
 
@@ -135,19 +141,23 @@ class TikTokAPI:
             init_response = await client.post(
                 f"{TikTokAPI.BASE_URL}/video/init/",
                 headers={"Authorization": f"Bearer {access_token}"},
-                json={"post_info": {"title": caption, "privacy_level": "PUBLIC"}},
+                json={
+                    "post_info": {"title": caption, "privacy_level": "PUBLIC"}
+                },
             )
 
             if init_response.status_code != 200:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Failed to initialize TikTok upload: {init_response.text}",
+                    detail=f"Failed to initialize TikTok upload: "
+                           f"{init_response.text}",
                 )
 
             upload_data = init_response.json()
             upload_id = upload_data["data"]["upload_id"]
 
-            # Step 2: Upload video (simplified - in reality you'd chunk large videos)
+            # Step 2: Upload video (simplified - in reality you'd chunk
+            # large videos)
             upload_response = await client.post(
                 f"{TikTokAPI.BASE_URL}/video/upload/",
                 headers={"Authorization": f"Bearer {access_token}"},
@@ -158,7 +168,8 @@ class TikTokAPI:
             if upload_response.status_code != 200:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Failed to upload video to TikTok: {upload_response.text}",
+                    detail=f"Failed to upload video to TikTok: "
+                           f"{upload_response.text}",
                 )
 
             # Step 3: Complete upload
@@ -171,7 +182,8 @@ class TikTokAPI:
             if complete_response.status_code != 200:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Failed to publish video to TikTok: {complete_response.text}",
+                    detail=f"Failed to publish video to TikTok: "
+                           f"{complete_response.text}",
                 )
 
             return complete_response.json()
