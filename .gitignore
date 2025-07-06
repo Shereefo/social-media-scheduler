@@ -14,3 +14,10 @@ uploads/
 uploads/
 *.mov
 *.mp4
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.backup
+*.tfvars
