@@ -52,7 +52,7 @@ jobs:
     - name: Run tests with pytest
       run: | 
         echo "Running tests..."
-        pytest backend/ -v --tb=short
+        pytest tests/ -v --tb=short
       env:
         DATABASE_URL: sqlite:///./test.db
         SECRET_KEY: test-secret-key-for-ci
