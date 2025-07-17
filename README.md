@@ -1108,11 +1108,6 @@ The security flow illustrates:
 - **Implementation**: Single dashboard for monitoring security posture across all components
 - **Cost**: $2-15/month
 
-### Security Flow
-
-```
-
-```
 
 ### Key Security Features
 - **Zero Hardcoded Secrets**: All sensitive data stored encrypted in Secrets Manager
