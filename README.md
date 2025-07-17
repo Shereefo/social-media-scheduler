@@ -1108,12 +1108,6 @@ The security flow illustrates:
 - **Implementation**: Single dashboard for monitoring security posture across all components
 - **Cost**: $2-15/month
 
-### Security Flow
-
-```
-User Request → AWS WAF (filter threats) → TikTimer API → Secrets Manager (retrieve credentials) → RDS Database
-                                              ↕
-                                      GuardDuty (monitor) ← Security Hub (aggregate)
 ```
 
 ### Key Security Features
