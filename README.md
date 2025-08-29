@@ -13,40 +13,42 @@ All workflow steps now passing: formatting, linting, security scans, tests, and 
 [![Docker](https://img.shields.io/badge/Docker-20.10+-blue?style=flat&logo=docker)](https://docker.com)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-
 A scalable FastAPI-based application designed to schedule and manage posts across social media platforms with TikTok integration. This project uses modern async Python with FastAPI, SQLAlchemy for ORM functionality, and JWT-based authentication to provide a secure and responsive API.
 
 ## Table of Contents
 1. [Project Overview](#project-overview)
-2. [Tech Stack](#tech-stack)
-3. [Features](#features)
-4. [Directory Structure](#directory-structure)
-5. [Setup & Installation](#setup--installation)
+2. [Architecture Overview](#architecture-overview)
+3. [Tech Stack](#tech-stack)
+4. [Features](#features)
+5. [Directory Structure](#directory-structure)
+6. [Setup & Installation](#setup--installation)
     - [Using Docker (Recommended)](#using-docker-recommended)
     - [Local Development](#local-development)
-6. [Environment Variables](#environment-variables)
-7. [API Endpoints](#api-endpoints)
-8. [Authentication](#authentication)
-9. [TikTok Integration](#tiktok-integration)
-10. [Database Schema](#database-schema)
-11. [Development Notes](#development-notes)
-12. [Implementation Challenges & Solutions](#implementation-challenges--solutions)
-13. [Project Journey & Development Timeline](#project-journey--development-timeline)
-14. [Deployment Guide](#deployment-guide)
+7. [Environment Variables](#environment-variables)
+8. [API Endpoints](#api-endpoints)
+9. [Authentication](#authentication)
+10. [TikTok Integration](#tiktok-integration)
+11. [Database Schema](#database-schema)
+12. [Development Notes](#development-notes)
+13. [Implementation Challenges & Solutions](#implementation-challenges--solutions)
+14. [Project Journey & Development Timeline](#project-journey--development-timeline)
+15. [Deployment Guide](#deployment-guide)
     - [Netlify Deployment for TikTok OAuth Callback](#netlify-deployment-for-tiktok-oauth-callback)
     - [Docker-based Deployment](#docker-based-deployment)
-    - [Cloud Infrastructure](#cloud-infrastructure)
-15. [Current Project Status](#current-project-status)
-16. [Troubleshooting](#troubleshooting)
-17. [Next Steps](#next-steps)
-18. [License](#license)
+    - [Cloud Infrastructure with AWS and Terraform](#cloud-infrastructure-with-aws-and-terraform)
+16. [Cost Optimization Strategy](#cost-optimization-strategy)
+17. [Security Implementation](#security-implementation)
+18. [CI/CD Pipeline](#cicd-pipeline)
+19. [Current Project Status](#current-project-status)
+20. [Troubleshooting](#troubleshooting)
+21. [Next Steps](#next-steps)
+22. [License](#license)
 
 ---
 
 ## Project Overview
 
 This application provides a RESTful API for scheduling and managing social media posts. It uses modern asynchronous Python with FastAPI and SQLAlchemy for database operations. The entire application is containerized with Docker for easy deployment and development.
-
 
 ### **Inspiration & Motivation**
 
@@ -62,6 +64,23 @@ This project represents the intersection of my interests in social media, system
 - TikTok integration for video uploads
 - Background task processing for automatic publishing
 - Modular and scalable architecture
+
+---
+
+## Architecture Overview
+
+### TikTimer Complete System Architecture
+
+![TikTimer Complete AWS Infrastructure](https://github.com/Shereefo/social-media-scheduler/blob/main/images/tiktimer-architecture.jpg?raw=true)
+
+*Complete AWS infrastructure showing the full system architecture from content creators through frontend, API services, databases, and multi-AZ cloud deployment with comprehensive networking, security, and storage layers*
+
+The diagram above illustrates TikTimer's complete architecture, including:
+- **Content Creator Workflow**: From frontend interface through TikTok API integration
+- **OAuth Authentication Flow**: Secure TikTok API authentication and token management
+- **Multi-AZ AWS Infrastructure**: ECS Fargate containers, RDS databases, and S3 storage
+- **Network Architecture**: VPC design with public/private subnets and security groups
+- **Scalability Features**: Auto-scaling groups and load balancing across availability zones
 
 ---
 
@@ -148,8 +167,6 @@ social-media-scheduler/
 │   ├── env.py                # Migration environment
 │   ├── README                # Migration documentation
 │   └── script.py.mako        # Migration template
-<<<<<<< HEAD
-=======
 ├── tiktimer-infrastructure/  # Terraform infrastructure as code
 │   ├── modules/              # Terraform modules
 │   │   ├── networking/       # VPC, subnets, security groups
@@ -161,7 +178,8 @@ social-media-scheduler/
 │   ├── variables.tf          # Input variables
 │   ├── outputs.tf            # Output values
 │   └── providers.tf          # AWS provider configuration
->>>>>>> 22bed3b494bea48b92b32be87cf750fbff532488
+├── .github/workflows/        # GitHub Actions CI/CD
+│   └── ci.yml                # Continuous integration pipeline
 ├── Dockerfile                # Docker configuration
 ├── docker-compose.yml        # Docker Compose setup
 ├── requirements.txt          # Python dependencies
@@ -389,6 +407,17 @@ To use this approach:
 
 ### TikTok Authentication Flow
 
+![TikTok OAuth Integration Flow](https://github.com/Shereefo/social-media-scheduler/blob/main/images/oauth-flow.jpg?raw=true)
+
+*TikTok OAuth 2.0 integration flow showing the complete authentication process from user action through external services to backend token storage*
+
+The authentication flow demonstrates:
+- **User Initiation**: User clicks "Connect TikTok" in the application
+- **OAuth Redirect**: Secure redirect to TikTok's authorization servers
+- **Netlify Callback**: Custom callback page handling due to localhost restrictions
+- **Token Exchange**: Secure code exchange and token storage in the backend
+- **Database Storage**: Encrypted token storage with timezone-aware expiration
+
 1. **Start OAuth Flow:**
    ```
    GET /api/v1/auth/tiktok/authorize
@@ -609,21 +638,11 @@ This project has evolved through several key phases and milestones:
   - Implemented token refresh mechanism for expired TikTok tokens
   - Enhanced logging for debugging OAuth flow
 
-<<<<<<< HEAD
-- **Recent Additions (yesterday)**
-=======
 - **Recent Additions**
->>>>>>> 22bed3b494bea48b92b32be87cf750fbff532488
   - Completed TikTok integration testing with real accounts
   - Added .gitignore for video files and uploads directory
   - Fixed edge cases in OAuth error handling
   - Improved Docker configuration for development environment
-<<<<<<< HEAD
-
-- **Documentation (14 hours ago)**
-  - Created initial README.md
-=======
->>>>>>> 22bed3b494bea48b92b32be87cf750fbff532488
   - Documented API endpoints and TikTok integration process
   - Added setup instructions for local and Docker environments
 
@@ -874,6 +893,258 @@ The following infrastructure components are planned for future implementation:
 
 ---
 
+## Cost Optimization Strategy
+
+### AWS Infrastructure Cost Analysis
+
+![TikTimer Cost Optimization Strategy](https://github.com/Shereefo/social-media-scheduler/blob/main/images/cost-optimization.jpg?raw=true)
+
+*Comprehensive cost comparison showing TikTimer's optimized approach (~$50/month) versus premium alternatives (~$300/month), demonstrating 83% cost savings through strategic architectural decisions*
+
+### Optimization Achievements
+
+**TikTimer's Optimized Approach (~$50/month):**
+- ✅ **Single NAT Gateway**: Saves $64/month vs multi-AZ setup
+- ✅ **Right-sized RDS (db.t3.micro)**: Cuts database costs by 82%
+- ✅ **S3 Lifecycle Policies**: Reduce storage costs by 80% through intelligent tiering
+- ✅ **ECS Fargate**: Eliminates always-on EC2 charges with pay-per-use pricing
+- ✅ **VPC Endpoints**: Eliminate data transfer fees for S3/DynamoDB traffic
+- ✅ **Infrastructure Scaling**: Costs scale with actual user growth rather than provisioned capacity
+
+**Premium Approach Avoided (~$300/month):**
+- ❌ **NAT Gateway per AZ**: $96/month for unused redundancy
+- ❌ **Over-provisioned RDS**: $70/month wasted on idle capacity
+- ❌ **No Storage Optimization**: 5x higher costs without lifecycle management
+- ❌ **Always-on EC2**: $75/month continuous charges regardless of usage
+- ❌ **Data Transfer Charges**: Unnecessary overhead from poor network design
+
+### Business Impact
+- **83% Cost Reduction**: From $300 to $50 monthly operational costs
+- **Scalable Economics**: Infrastructure costs grow proportionally with user base
+- **Reinvestment Opportunity**: $250/month savings enable feature development investment
+- **Competitive Advantage**: Lower operational costs support competitive pricing strategies
+
+This cost optimization strategy demonstrates enterprise-level financial planning while maintaining high availability, security, and performance standards.
+
+---
+
+## CI/CD Pipeline
+
+![CI Pipeline Status](https://github.com/Shereefo/social-media-scheduler/workflows/TikTimer%20CI%20Pipeline/badge.svg)
+
+### Overview
+
+TikTimer implements a comprehensive CI/CD strategy using GitHub Actions, progressing from basic continuous integration to full deployment automation. Our current implementation focuses on robust continuous integration with planned continuous deployment capabilities.
+
+### 🎯 Pipeline Objectives
+
+Our CI pipeline ensures code quality, security, and reliability through automated validation on every code change. The pipeline serves as an automated gatekeeper that prevents issues from reaching production.
+
+### 🏗️ Architecture Overview
+
+```
+Code Push/PR → GitHub Actions Trigger → Parallel Jobs → Merge Decision
+                        ↓
+    ┌─────────────────────────────────────────────────────────┐
+    │  Python Quality Gates  │  Infrastructure   │  Container  │
+    │  • Black formatting    │  Validation       │  Testing    │
+    │  • Flake8 linting      │  • Terraform fmt  │  • Build    │
+    │  • Bandit security     │  • Terraform      │  • Startup  │
+    │  • pytest testing     │    validate       │  • Health   │
+    └─────────────────────────────────────────────────────────┘
+```
+
+**Pipeline Triggers:**
+- Pull requests to `main` and `develop` branches
+- Direct pushes to `main` branch
+- Manual workflow dispatch for testing
+
+**Execution Strategy:** 3 parallel jobs for optimal speed (~48 seconds total)
+
+### 🔍 Quality Gates Implementation
+
+#### **Job 1: Python Code Quality & Testing (~30s)**
+
+**Quality Standards Enforced:**
+- **Black**: Automatic code formatting with 88-character line length
+- **Flake8**: PEP8 compliance with complexity checks (max complexity: 10)
+- **Bandit**: Security vulnerability scanning with zero-tolerance policy
+- **pytest**: Comprehensive test suite with async support and proper environment isolation
+
+#### **Job 2: Infrastructure Validation (~17s)**
+
+**Infrastructure Standards:**
+- **Format Consistency**: `terraform fmt -check -recursive` ensures standard formatting
+- **Syntax Validation**: `terraform validate` verifies configuration correctness
+- **Module Dependencies**: Validates all module variables and dependencies
+- **Best Practices**: Enforces Infrastructure as Code standards
+
+#### **Job 3: Container Testing (~44s)**
+
+**Container Validation:**
+- **Build Verification**: Ensures Dockerfile builds successfully without errors
+- **Startup Testing**: Validates container runs and responds to health checks
+- **Environment Testing**: Confirms application starts with test configurations
+- **Resource Validation**: Verifies container resource requirements and constraints
+
+### 📊 Implementation Results
+
+The development process shows a complete learning journey from initial implementation to consistent success:
+
+| Workflow Run | Status | Key Achievement |
+|--------------|--------|----------------|
+| **#18: "Update README with CI status"** | ✅ Success | Final implementation working perfectly |
+| **#17: "Improve CI test setup"** | ✅ Success | Test configuration optimized |
+| **#16: "Add basic test suite"** | ✅ Success | Comprehensive test coverage added |
+| **#15: "Fix bandit security warning"** | ❌ → ✅ | Security vulnerability remediation |
+| **#14: "Configure 88 character line length"** | ❌ → ✅ | Tool configuration alignment |
+| **#13: "Fix Black formatting and flake8"** | ❌ → ✅ | Code quality standards established |
+
+**Current Pipeline Performance:**
+- **Success Rate**: 100% (runs #16-18)
+- **Average Duration**: 48 seconds
+- **Parallel Execution**: 3 jobs running simultaneously
+- **Quality Gates**: 9 automated validation checks
+
+### 🔧 Configuration Management
+
+**Centralized Tool Configuration:**
+```toml
+[tool.black]
+line-length = 88
+target-version = ['py312']
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503"]
+max-complexity = 10
+```
+
+**Environment-Specific Settings:**
+- **Test Environment**: SQLite database, mock API keys
+- **CI Environment**: Isolated, reproducible execution
+- **Security**: No sensitive data in CI configuration
+
+### 🚀 Planned Continuous Deployment Strategy
+
+Building on our solid CI foundation, we're planning to implement Continuous Deployment in phases:
+
+#### **Phase 1: Build Automation (Next)**
+- Automated Docker image builds triggered by successful CI
+- Push images to AWS ECR with proper tagging (git SHA + semantic versioning)
+- Artifact management and retention policies
+
+#### **Phase 2: Staging Environment (Following)**
+- Automated deployment to staging environment after successful builds
+- Integration testing in production-like environment
+- Terraform automation for infrastructure updates
+- Smoke tests and health validation
+
+#### **Phase 3: Production Deployment (Final)**
+- Manual approval gates for production releases
+- Blue/green deployment strategy for zero-downtime updates
+- Automated rollback capabilities if health checks fail
+- Comprehensive monitoring and alerting integration
+
+### 🔄 Local Development Integration
+
+**Quality Validation Commands:**
+```bash
+# Run all CI checks locally
+black backend/                    # Format code
+flake8 backend/                  # Lint code  
+bandit -r backend/               # Security scan
+pytest backend/tests/ -v         # Run tests
+terraform fmt -check tiktimer-infrastructure/  # Format infrastructure
+terraform validate               # Validate infrastructure
+```
+
+This CI/CD implementation represents a production-ready approach to software delivery, ensuring quality, security, and reliability at every stage of the development lifecycle.
+
+---
+
+## Security Implementation
+
+### Enterprise-Grade Security Architecture
+
+TikTimer implements a comprehensive 4-layer AWS security system designed specifically for social media applications handling sensitive creator data and API credentials.
+
+### Security Architecture Diagram
+
+![TikTimer Security Architecture](https://github.com/Shereefo/social-media-scheduler/blob/main/images/security-architecture.jpg?raw=true)
+
+*4-layer security architecture showing comprehensive protection: WAF edge security, application-layer protection, secrets management, and continuous monitoring*
+
+The security flow illustrates:
+- **AWS WAF**: Edge protection filtering malicious requests and rate limiting
+- **TikTimer API**: FastAPI application with ECS auto-scaling capabilities  
+- **Secrets Manager**: Encrypted credential storage with automatic rotation
+- **RDS Database**: Multi-AZ encrypted database with network isolation
+- **GuardDuty & Security Hub**: AI-powered monitoring and compliance tracking
+
+### Security Components
+
+#### AWS WAF (Web Application Firewall)
+- **Purpose**: First line of defense against malicious requests
+- **TikTimer Protection**: Blocks bot attacks on scheduling endpoints, prevents credential brute force attempts, and rate limits suspicious API usage
+- **Implementation**: Deployed at the edge with rules for SQL injection protection and rate limiting
+- **Cost**: $10-25/month
+
+#### AWS Secrets Manager
+- **Purpose**: Encrypted storage and rotation of sensitive credentials
+- **TikTimer Protection**: Securely stores TikTok API tokens, database passwords, and JWT secrets with automatic rotation capabilities
+- **Implementation**: Application retrieves credentials at runtime, eliminating hardcoded secrets in code
+- **Cost**: $4-8/month
+
+#### AWS GuardDuty
+- **Purpose**: AI-powered threat detection and monitoring
+- **TikTimer Protection**: Monitors for unusual posting patterns, detects potential account takeovers, and identifies suspicious API usage across creator accounts
+- **Implementation**: Continuously analyzes CloudTrail events, DNS queries, and network traffic
+- **Cost**: $15-65/month
+
+#### AWS Security Hub
+- **Purpose**: Centralized security monitoring and compliance tracking
+- **TikTimer Protection**: Aggregates security findings from all services, provides compliance reporting, and maintains audit trails
+- **Implementation**: Single dashboard for monitoring security posture across all components
+- **Cost**: $2-15/month
+
+
+### Key Security Features
+- **Zero Hardcoded Secrets**: All sensitive data stored encrypted in Secrets Manager
+- **Multi-Layer Protection**: Defense in depth with edge, application, and data layer security
+- **Real-Time Monitoring**: 24/7 AI-powered threat detection and alerting
+- **Compliance Ready**: Automated security reporting and audit trail generation
+- **Creator-Focused**: Specifically designed to protect high-value social media accounts and API access
+
+### Business Impact
+- **Cost**: $85-150/month for enterprise-grade security
+- **Scale**: Same protection from 1K to 100K+ users
+- **Trust**: Enables creator confidence in platform security
+- **Compliance**: Supports enterprise customer requirements
+
+This security implementation transforms TikTimer from a development project into an enterprise-ready platform capable of handling sensitive creator data and high-value social media integrations.
+
+---
+
+## Current Project Status
+
+The project is currently in active development with the following components implemented:
+- ✅ Core API framework with FastAPI
+- ✅ Database models and migrations with SQLAlchemy and Alembic
+- ✅ User authentication system
+- ✅ TikTok OAuth integration
+- ✅ Post scheduling and management
+- ✅ File upload and storage system
+- ✅ Background task processing
+- ✅ Docker containerization
+- ✅ Error handling middleware
+- ✅ Health check endpoints
+- ✅ AWS infrastructure code with Terraform modules
+- ✅ CI/CD pipeline with GitHub Actions
+- ✅ Enterprise security architecture implementation
+
+---
+
 ## Troubleshooting
 
 ### Database Connection Issues
@@ -920,46 +1191,7 @@ The following infrastructure components are planned for future implementation:
 
 ---
 
-## Current Project Status
-
-The project is currently in active development with the following components implemented:
-- ✅ Core API framework with FastAPI
-- ✅ Database models and migrations with SQLAlchemy and Alembic
-- ✅ User authentication system
-- ✅ TikTok OAuth integration
-- ✅ Post scheduling and management
-- ✅ File upload and storage system
-- ✅ Background task processing
-- ✅ Docker containerization
-- ✅ Error handling middleware
-- ✅ Health check endpoints
-<<<<<<< HEAD
-
 ## Next Steps
-
-- [ ] Add additional social media platform integrations (Twitter, Instagram, etc.)
-- [ ] Implement analytics for post performance
-- [ ] Create a frontend interface using React or Vue.js
-- [ ] Add admin dashboard for user management
-- [ ] Implement rate limiting and request throttling
-- [ ] Add comprehensive test suite (unit, integration, E2E)
-- [ ] Set up CI/CD pipeline with GitHub Actions
-- [ ] Migrate file storage from local to S3 for production
-- [ ] Add proper user management with roles and permissions
-- [ ] Implement advanced scheduling features (recurring posts, post series)
-- [ ] Enhance documentation with examples and usage scenarios
-- [ ] Deploy to AWS using Terraform infrastructure as code
-=======
-- ✅ AWS infrastructure code with Terraform modules
-
-## Next Steps
-
-### Phase 1: Core Infrastructure & Operations
-- [ ] Set up CI/CD pipeline with GitHub Actions
-- [ ] Migrate file storage from local to S3 for production
-- [ ] Add comprehensive test suite (unit, integration, E2E)
-- [ ] Implement rate limiting and request throttling
-- [ ] Optimize AWS infrastructure costs and implement auto-scaling
 
 ### Phase 2: User Experience & Frontend
 - [ ] Create a frontend interface using React or Vue.js
@@ -977,4 +1209,3 @@ The project is currently in active development with the following components imp
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
->>>>>>> 22bed3b494bea48b92b32be87cf750fbff532488
