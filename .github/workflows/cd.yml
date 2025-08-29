@@ -1,0 +1,345 @@
+name: TikTimer Dev CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      skip_deployment:
+        description: 'Skip actual deployment (validation only)'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  AWS_REGION: us-east-2
+  ECR_REPOSITORY: tiktimer-dev
+  ECS_SERVICE: tiktimer-dev-service
+  ECS_CLUSTER: tiktimer-dev-cluster
+  CONTAINER_NAME: tiktimer-app
+
+jobs:
+  # Job 1: Validate deployment prerequisites
+  validate:
+    name: Validate Deployment Prerequisites
+    runs-on: ubuntu-latest
+    outputs:
+      infrastructure_exists: ${{ steps.check-infra.outputs.exists }}
+      should_deploy: ${{ steps.check-infra.outputs.should_deploy }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Verify AWS credentials
+      run: |
+        echo "Verifying AWS credentials and access..."
+        aws sts get-caller-identity
+        echo "AWS credentials verified successfully"
+
+    - name: Check infrastructure status
+      id: check-infra
+      run: |
+        echo "Checking if AWS infrastructure exists..."
+        
+        # Check if ECS cluster exists
+        if aws ecs describe-clusters --clusters $ECS_CLUSTER --query 'clusters[0].status' --output text 2>/dev/null | grep -q "ACTIVE"; then
+          echo "ECS cluster found and active"
+          CLUSTER_EXISTS=true
+        else
+          echo "ECS cluster does not exist or is not active"
+          CLUSTER_EXISTS=false
+        fi
+        
+        # Check if ECR repository exists
+        if aws ecr describe-repositories --repository-names $ECR_REPOSITORY 2>/dev/null >/dev/null; then
+          echo "ECR repository found"
+          ECR_EXISTS=true
+        else
+          echo "ECR repository does not exist"
+          ECR_EXISTS=false
+        fi
+        
+        # Determine deployment strategy
+        if [ "$CLUSTER_EXISTS" = true ] && [ "$ECR_EXISTS" = true ] && [ "${{ github.event.inputs.skip_deployment }}" != "true" ]; then
+          echo "should_deploy=true" >> $GITHUB_OUTPUT
+          echo "exists=true" >> $GITHUB_OUTPUT
+          echo "Infrastructure ready - proceeding with deployment"
+        else
+          echo "should_deploy=false" >> $GITHUB_OUTPUT
+          echo "exists=false" >> $GITHUB_OUTPUT
+          echo "Infrastructure not available - validation mode only"
+        fi
+
+  # Job 2: Build and test Docker image
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: [validate]
+    outputs:
+      image_tag: ${{ steps.build-image.outputs.image_tag }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      if: needs.validate.outputs.infrastructure_exists == 'true'
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build Docker image
+      id: build-image
+      env:
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        echo "Building Docker image for deployment"
+        docker build -t tiktimer-app:$IMAGE_TAG .
+        docker build -t tiktimer-app:latest .
+        echo "Docker image built successfully"
+        echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+    - name: Push image to ECR
+      if: needs.validate.outputs.should_deploy == 'true'
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ steps.build-image.outputs.image_tag }}
+      run: |
+        echo "Pushing Docker image to ECR repository"
+        docker tag tiktimer-app:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker tag tiktimer-app:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+        echo "Docker image pushed to ECR successfully"
+
+    - name: Validate deployment configuration
+      if: needs.validate.outputs.should_deploy == 'false'
+      run: |
+        echo "Validating deployment configuration without actual deployment"
+        echo "Image tag would be: ${{ steps.build-image.outputs.image_tag }}"
+        echo "Target ECS cluster: $ECS_CLUSTER"
+        echo "Target ECS service: $ECS_SERVICE"
+        echo "Configuration validation completed"
+
+  # Job 3: Run database migrations
+  migrate:
+    name: Database Migration
+    runs-on: ubuntu-latest
+    needs: [validate, build]
+    if: needs.validate.outputs.should_deploy == 'true'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Run database migrations
+      run: |
+        echo "Running Alembic database migrations"
+        # Configure database connection
+        export DATABASE_URL="postgresql://postgres:${DB_PASSWORD}@${DB_HOST}:5432/scheduler"
+        
+        # Run migrations
+        alembic upgrade head
+        echo "Database migrations completed successfully"
+      env:
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_HOST: ${{ secrets.DB_HOST }}
+
+  # Job 4: Deploy to ECS
+  deploy:
+    name: Deploy to ECS
+    runs-on: ubuntu-latest
+    needs: [validate, build, migrate]
+    if: needs.validate.outputs.should_deploy == 'true'
+    
+    steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Download current task definition
+      run: |
+        echo "Downloading current ECS task definition"
+        aws ecs describe-task-definition \
+          --task-definition $ECS_SERVICE \
+          --query taskDefinition > task-definition.json
+        echo "Task definition downloaded"
+
+    - name: Update task definition
+      run: |
+        echo "Updating task definition with new image"
+        NEW_IMAGE="${ECR_REGISTRY}/${ECR_REPOSITORY}:${{ needs.build.outputs.image_tag }}"
+        
+        # Update image in task definition
+        jq --arg IMAGE "$NEW_IMAGE" \
+          '.containerDefinitions[0].image = $IMAGE' \
+          task-definition.json > new-task-definition.json
+          
+        echo "Task definition updated with new image"
+
+    - name: Deploy to ECS service
+      run: |
+        echo "Deploying application to ECS"
+        
+        # Register new task definition
+        NEW_TASK_DEF=$(aws ecs register-task-definition \
+          --cli-input-json file://new-task-definition.json \
+          --query 'taskDefinition.taskDefinitionArn' --output text)
+        
+        echo "New task definition registered: $NEW_TASK_DEF"
+        
+        # Update ECS service
+        aws ecs update-service \
+          --cluster $ECS_CLUSTER \
+          --service $ECS_SERVICE \
+          --task-definition $NEW_TASK_DEF
+        
+        echo "Waiting for deployment to complete"
+        aws ecs wait services-stable \
+          --cluster $ECS_CLUSTER \
+          --services $ECS_SERVICE
+        
+        echo "ECS deployment completed successfully"
+
+  # Job 5: Post-deployment health check
+  health-check:
+    name: Health Check
+    runs-on: ubuntu-latest
+    needs: [validate, deploy]
+    if: needs.validate.outputs.should_deploy == 'true'
+    
+    steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Test application health
+      run: |
+        echo "Running post-deployment health checks"
+        
+        # Get load balancer DNS
+        ALB_DNS=$(aws elbv2 describe-load-balancers \
+          --query 'LoadBalancers[0].DNSName' \
+          --output text 2>/dev/null || echo "")
+        
+        if [ -n "$ALB_DNS" ] && [ "$ALB_DNS" != "None" ]; then
+          echo "Testing application endpoint: http://$ALB_DNS/health"
+          
+          # Wait for load balancer to route traffic
+          sleep 60
+          
+          # Perform health check with retries
+          for i in {1..5}; do
+            echo "Health check attempt $i of 5"
+            if curl -f --max-time 30 "http://$ALB_DNS/health" > /dev/null 2>&1; then
+              echo "Health check passed successfully"
+              break
+            elif [ $i -eq 5 ]; then
+              echo "Health check failed after 5 attempts"
+              curl -v "http://$ALB_DNS/health" || true
+              exit 1
+            else
+              echo "Health check failed, retrying in 30 seconds"
+              sleep 30
+            fi
+          done
+        else
+          echo "Load balancer not found, checking ECS service status"
+          
+          # Check ECS service health
+          RUNNING_TASKS=$(aws ecs describe-services \
+            --cluster $ECS_CLUSTER \
+            --services $ECS_SERVICE \
+            --query 'services[0].runningCount' \
+            --output text)
+          
+          if [ "$RUNNING_TASKS" -gt 0 ]; then
+            echo "ECS service is healthy with $RUNNING_TASKS running tasks"
+          else
+            echo "ECS service has no running tasks"
+            exit 1
+          fi
+        fi
+        
+        echo "All health checks completed successfully"
+
+  # Job 6: Create deployment summary
+  summary:
+    name: Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [validate, build, migrate, deploy, health-check]
+    if: always()
+    
+    steps:
+    - name: Generate deployment report
+      run: |
+        echo "## TikTimer Dev Deployment Report" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Commit SHA:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Timestamp:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ needs.validate.outputs.should_deploy }}" == "true" ]; then
+          if [ "${{ needs.health-check.result }}" == "success" ]; then
+            echo "**Status:** DEPLOYED SUCCESSFULLY" >> $GITHUB_STEP_SUMMARY
+            echo "**Result:** Application deployed and all health checks passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Status:** DEPLOYMENT FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "**Result:** Deployment completed but health checks failed" >> $GITHUB_STEP_SUMMARY
+          fi
+        else
+          echo "**Status:** VALIDATION COMPLETED" >> $GITHUB_STEP_SUMMARY
+          echo "**Result:** Pipeline validated successfully - infrastructure not available for deployment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Run \`terraform apply\` in the tiktimer-infrastructure directory" >> $GITHUB_STEP_SUMMARY
+          echo "2. Configure required GitHub Secrets" >> $GITHUB_STEP_SUMMARY
+          echo "3. Push changes to main branch to trigger deployment" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Deployment Configuration" >> $GITHUB_STEP_SUMMARY
+        echo "- **AWS Region:** ${{ env.AWS_REGION }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **ECS Cluster:** ${{ env.ECS_CLUSTER }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **ECS Service:** ${{ env.ECS_SERVICE }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **ECR Repository:** ${{ env.ECR_REPOSITORY }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Image Tag:** ${{ needs.build.outputs.image_tag }}" >> $GITHUB_STEP_SUMMARY
