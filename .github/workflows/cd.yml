@@ -14,8 +14,8 @@ on:
 env:
   AWS_REGION: us-east-2
   ECR_REPOSITORY: tiktimer-dev
-  ECS_SERVICE: tiktimer-dev-service
-  ECS_CLUSTER: tiktimer-dev-cluster
+  ECS_SERVICE: TikTimer-dev-service
+  ECS_CLUSTER: TikTimer-dev-cluster
   CONTAINER_NAME: tiktimer-app
 
 jobs:
@@ -90,6 +90,7 @@ jobs:
     needs: [validate]
     outputs:
       image_tag: ${{ steps.build-image.outputs.image_tag }}
+      ecr_registry: ${{ steps.login-ecr.outputs.registry }}
     
     steps:
     - name: Checkout code
@@ -205,16 +206,19 @@ jobs:
         echo "Task definition downloaded"
 
     - name: Update task definition
+      env:
+        ECR_REGISTRY: ${{ needs.build.outputs.ecr_registry }}
+        IMAGE_TAG: ${{ needs.build.outputs.image_tag }}
       run: |
         echo "Updating task definition with new image"
-        NEW_IMAGE="${ECR_REGISTRY}/${ECR_REPOSITORY}:${{ needs.build.outputs.image_tag }}"
-        
+        NEW_IMAGE="${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+
         # Update image in task definition
         jq --arg IMAGE "$NEW_IMAGE" \
           '.containerDefinitions[0].image = $IMAGE' \
           task-definition.json > new-task-definition.json
-          
-        echo "Task definition updated with new image"
+
+        echo "Task definition updated with new image: $NEW_IMAGE"
 
     - name: Deploy to ECS service
       run: |
