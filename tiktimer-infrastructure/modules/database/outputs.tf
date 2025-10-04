@@ -43,3 +43,9 @@ output "db_instance_arn" {
   description = "The ARN of the RDS instance"
   value       = aws_db_instance.main.arn
 }
+
+output "db_password" {
+  description = "The database password (auto-generated if not provided)"
+  value       = var.db_password != "" ? var.db_password : random_password.db_password[0].result
+  sensitive   = true
+}
