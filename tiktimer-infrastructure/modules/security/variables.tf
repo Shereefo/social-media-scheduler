@@ -40,6 +40,7 @@ variable "enable_guardduty" {
   default     = false
 }
 
+
 variable "enable_security_hub" {
   description = "Enable Security Hub for security standards"
   type        = bool

@@ -12,7 +12,6 @@ module "networking" {
   single_nat_gateway  = var.single_nat_gateway
 }
 
-
 module "storage" {
   source = "./modules/storage"
 
@@ -57,6 +56,87 @@ module "database" {
   db_apply_immediately       = true
 }
 
+# ECR Repository for Docker images
+resource "aws_ecr_repository" "app" {
+  name                 = "${lower(var.project_name)}-${var.environment}"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  tags = {
+    Name        = "${var.project_name}-${var.environment}-ecr"
+    Environment = var.environment
+  }
+}
+
+# ECR Lifecycle Policy
+resource "aws_ecr_lifecycle_policy" "app_policy" {
+  repository = aws_ecr_repository.app.name
+
+  policy = jsonencode({
+    rules = [
+      {
+        rulePriority = 1
+        description  = "Keep last 10 images"
+        selection = {
+          tagStatus     = "tagged"
+          tagPrefixList = ["v"]
+          countType     = "imageCountMoreThan"
+          countNumber   = 10
+        }
+        action = {
+          type = "expire"
+        }
+      },
+      {
+        rulePriority = 2
+        description  = "Delete untagged images older than 1 day"
+        selection = {
+          tagStatus   = "untagged"
+          countType   = "sinceImagePushed"
+          countUnit   = "days"
+          countNumber = 1
+        }
+        action = {
+          type = "expire"
+        }
+      }
+    ]
+  })
+}
+
+# ECR Repository Policy for GitHub Actions
+resource "aws_ecr_repository_policy" "app_policy" {
+  repository = aws_ecr_repository.app.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowPushPull"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        }
+        Action = [
+          "ecr:GetAuthorizationToken",
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "ecr:InitiateLayerUpload",
+          "ecr:UploadLayerPart",
+          "ecr:CompleteLayerUpload",
+          "ecr:PutImage"
+        ]
+      }
+    ]
+  })
+}
+
+# Get current AWS account ID
+data "aws_caller_identity" "current" {}
 
 module "compute" {
   source = "./modules/compute"
@@ -74,7 +154,7 @@ module "compute" {
   container_memory   = var.container_memory
   desired_count      = var.desired_count
   enable_autoscaling = var.enable_autoscaling
-  container_image    = var.container_image
+  container_image    = "${aws_ecr_repository.app.repository_url}:latest"
   health_check_path  = var.health_check_path
 
   # Create a database URL for the container to use
@@ -84,8 +164,6 @@ module "compute" {
     module.database
   ]
 }
-
-
 
 module "security" {
   source = "./modules/security"

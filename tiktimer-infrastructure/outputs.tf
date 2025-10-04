@@ -49,6 +49,12 @@ output "db_instance_port" {
   value       = module.database.db_instance_port
 }
 
+output "db_password" {
+  description = "The database password (for GitHub Secrets)"
+  value       = module.database.db_password
+  sensitive   = true
+}
+
 # Compute module outputs
 output "alb_dns_name" {
   description = "DNS name of the load balancer"
@@ -63,6 +69,17 @@ output "ecs_cluster_id" {
 output "ecs_service_name" {
   description = "Name of the ECS service"
   value       = module.compute.service_name
+}
+
+# ECR outputs
+output "ecr_repository_url" {
+  description = "URL of the ECR repository"
+  value       = aws_ecr_repository.app.repository_url
+}
+
+output "ecr_repository_name" {
+  description = "Name of the ECR repository"
+  value       = aws_ecr_repository.app.name
 }
 
 
