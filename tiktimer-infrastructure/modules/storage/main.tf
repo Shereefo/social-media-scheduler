@@ -1,6 +1,6 @@
 # S3 bucket for video uploads
 resource "aws_s3_bucket" "uploads" {
-  bucket = "${var.project_name}-${var.environment}-uploads"
+  bucket = "${lower(var.project_name)}-${var.environment}-uploads"
 
   tags = {
     Name        = "${var.project_name}-${var.environment}-uploads"

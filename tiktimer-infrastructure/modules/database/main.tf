@@ -1,6 +1,6 @@
 # DB  Subnet group
 resource "aws_db_subnet_group" "main" {
-  name       = "${var.project_name}-${var.environment}-db-subnet-group"
+  name       = "${lower(var.project_name)}-${var.environment}-db-subnet-group"
   subnet_ids = var.db_subnet_ids
 
 
@@ -12,7 +12,7 @@ resource "aws_db_subnet_group" "main" {
 
 # DB parameter group
 resource "aws_db_parameter_group" "main" {
-  name   = "${var.project_name}-${var.environment}-postgres"
+  name   = "${lower(var.project_name)}-${var.environment}-postgres"
   family = "postgres15" # Update if needed
 
   parameter {
@@ -35,7 +35,7 @@ resource "random_password" "db_password" {
 
 # RDS PostgreSQL instance
 resource "aws_db_instance" "main" {
-  identifier           = "${var.project_name}-${var.environment}-db"
+  identifier           = "${lower(var.project_name)}-${var.environment}-db"
   allocated_storage    = var.db_allocated_storage
   storage_type         = var.db_storage_type
   engine               = "postgres"
