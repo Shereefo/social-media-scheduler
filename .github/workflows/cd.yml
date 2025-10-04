@@ -16,6 +16,7 @@ env:
   ECR_REPOSITORY: tiktimer-dev
   ECS_SERVICE: TikTimer-dev-service
   ECS_CLUSTER: TikTimer-dev-cluster
+  ECS_TASK_FAMILY: TikTimer-dev-task
   CONTAINER_NAME: tiktimer-app
 
 jobs:
@@ -201,7 +202,7 @@ jobs:
       run: |
         echo "Downloading current ECS task definition"
         aws ecs describe-task-definition \
-          --task-definition $ECS_SERVICE \
+          --task-definition $ECS_TASK_FAMILY \
           --query taskDefinition > task-definition.json
         echo "Task definition downloaded"
 
