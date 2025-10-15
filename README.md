@@ -7,7 +7,6 @@ All workflow steps now passing: formatting, linting, security scans, tests, and 
 
 ## 📚 Documentation
 Comprehensive implementation notes and guides are available in the **[docs/](./docs/)** directory:
-- **[README_FOR_NEXT_SESSION.md](./docs/README_FOR_NEXT_SESSION.md)** - Quick start for new sessions
 - **[CICD Implementation Notes](./docs/cicd/CICD_IMPLEMENTATION_NOTES.md)** - Complete CI/CD journey
 - **[Migration Implementation](./docs/cicd/MIGRATION_IMPLEMENTATION_SUMMARY.md)** - Database migrations guide
 - **[Quick Reference](./docs/references/QUICK_REFERENCE.md)** - Commands & debugging
