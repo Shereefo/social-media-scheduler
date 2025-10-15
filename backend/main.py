@@ -372,28 +372,49 @@ async def login_for_access_token(
 @app.get("/health", tags=["health"])
 async def health_check():
     """
-    Health check endpoint for monitoring system status.
+    Health check endpoint for AWS ALB and monitoring.
+
+    Tests database connectivity and returns appropriate status codes:
+    - 200 OK: Service is healthy and database is reachable
+    - 503 Service Unavailable: Database connection failed
+
     Returns:
-        dict: Status information including version and timestamp
+        dict: Status information including version, timestamp, and database status
     """
     from datetime import datetime, timezone
     from .database import async_session
+    from sqlalchemy import text
 
     try:
-        # Try to connect to the database
+        # Try to connect to the database with a simple query
         async with async_session() as session:
-            await session.execute("SELECT 1")
+            await session.execute(text("SELECT 1"))
             db_status = "connected"
-    except Exception as e:
-        logger.error(f"Database health check failed: {e}")
-        db_status = "disconnected"
 
-    return {
-        "status": "healthy",
-        "api_version": "0.1.0",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "database": db_status,
-    }
+        # If we got here, everything is healthy
+        return {
+            "status": "healthy",
+            "api_version": "0.1.0",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "database": db_status,
+            "service": "tiktimer-api"
+        }
+
+    except Exception as e:
+        logger.error(f"Database health check failed: {e}", exc_info=True)
+
+        # Return 503 so ALB marks this target as unhealthy
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "status": "unhealthy",
+                "api_version": "0.1.0",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "database": "disconnected",
+                "error": str(e),
+                "service": "tiktimer-api"
+            }
+        )
 
 
 @app.get("/users/me", response_model=UserResponse)

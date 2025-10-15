@@ -71,6 +71,16 @@ output "ecs_service_name" {
   value       = module.compute.service_name
 }
 
+output "migration_task_family" {
+  description = "Family name of the migration task definition for CD pipeline"
+  value       = module.compute.migration_task_family
+}
+
+output "app_security_group_id" {
+  description = "Security group ID for ECS tasks (needed for running migrations)"
+  value       = module.compute.app_security_group_id
+}
+
 # ECR outputs
 output "ecr_repository_url" {
   description = "URL of the ECR repository"

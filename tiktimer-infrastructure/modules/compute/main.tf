@@ -67,6 +67,47 @@ resource "aws_iam_role" "ecs_task_role" {
   }
 }
 
+# S3 Access Policy for ECS Task Role (application needs this to upload videos)
+resource "aws_iam_policy" "ecs_task_s3_policy" {
+  name        = "${var.project_name}-${var.environment}-task-s3-policy"
+  description = "Allow ECS tasks to access S3 uploads bucket for video storage"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "S3VideoUploadAccess"
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject"
+        ]
+        # Only allow access to objects within our specific bucket
+        Resource = "${var.s3_bucket_arn}/*"
+      },
+      {
+        Sid    = "S3ListBucketAccess"
+        Effect = "Allow"
+        Action = "s3:ListBucket"
+        # Only allow listing of our specific bucket
+        Resource = var.s3_bucket_arn
+      }
+    ]
+  })
+
+  tags = {
+    Name        = "${var.project_name}-${var.environment}-task-s3-policy"
+    Environment = var.environment
+  }
+}
+
+# Attach S3 policy to task role
+resource "aws_iam_role_policy_attachment" "ecs_task_s3_access" {
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = aws_iam_policy.ecs_task_s3_policy.arn
+}
+
 # Create the Task Definition
 resource "aws_ecs_task_definition" "app" {
   family                   = "${var.project_name}-${var.environment}-task"
@@ -141,6 +182,54 @@ resource "aws_cloudwatch_log_group" "app" {
 
   tags = {
     Name        = "${var.project_name}-${var.environment}-logs"
+    Environment = var.environment
+  }
+}
+
+# Database Migration Task Definition
+# This task is used to run Alembic migrations before application deployment
+resource "aws_ecs_task_definition" "migration" {
+  family                   = "${var.project_name}-${var.environment}-migration"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = "256"  # 0.25 vCPU (minimal for migrations)
+  memory                   = "512"  # 0.5 GB RAM (minimal for migrations)
+  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn            = aws_iam_role.ecs_task_role.arn
+
+  container_definitions = jsonencode([
+    {
+      name      = "migration"
+      image     = var.container_image
+      essential = true
+
+      # Override the default command to run migrations instead of starting the app
+      command = ["alembic", "upgrade", "head"]
+
+      environment = [
+        {
+          name  = "ENVIRONMENT"
+          value = var.environment
+        },
+        {
+          name  = "DATABASE_URL"
+          value = var.database_url
+        }
+      ]
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = "/ecs/${var.project_name}-${var.environment}"
+          "awslogs-region"        = var.aws_region
+          "awslogs-stream-prefix" = "migration"
+        }
+      }
+    }
+  ])
+
+  tags = {
+    Name        = "${var.project_name}-${var.environment}-migration-task"
     Environment = var.environment
   }
 }

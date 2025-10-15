@@ -158,7 +158,11 @@ module "compute" {
   health_check_path  = var.health_check_path
 
   # Create a database URL for the container to use
-  database_url = "postgresql://${var.db_username}:${var.db_password}@${module.database.db_instance_endpoint}/${var.db_name}"
+  database_url = "postgresql://${var.db_username}:${module.database.db_password}@${module.database.db_instance_endpoint}/${var.db_name}"
+
+  # Pass S3 bucket ARN for IAM policy
+  s3_bucket_arn = module.storage.bucket_arn
+
   depends_on = [
     module.networking,
     module.database

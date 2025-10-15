@@ -5,6 +5,14 @@
 ## CI Status ✅
 All workflow steps now passing: formatting, linting, security scans, tests, and Docker builds.
 
+## 📚 Documentation
+Comprehensive implementation notes and guides are available in the **[docs/](./docs/)** directory:
+- **[README_FOR_NEXT_SESSION.md](./docs/README_FOR_NEXT_SESSION.md)** - Quick start for new sessions
+- **[CICD Implementation Notes](./docs/cicd/CICD_IMPLEMENTATION_NOTES.md)** - Complete CI/CD journey
+- **[Migration Implementation](./docs/cicd/MIGRATION_IMPLEMENTATION_SUMMARY.md)** - Database migrations guide
+- **[Quick Reference](./docs/references/QUICK_REFERENCE.md)** - Commands & debugging
+- **[Development Session](./docs/development/DEVELOPMENT_SESSION_SUMMARY.md)** - Frontend implementation
+
 ![image alt](https://github.com/Shereefo/social-media-scheduler/blob/bea4c94258fcc33c28c02bfcecad91f0d4533fac/TikTimer%20logo.png)
 
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104.0+-005571?style=flat&logo=fastapi)](https://fastapi.tiangolo.com)

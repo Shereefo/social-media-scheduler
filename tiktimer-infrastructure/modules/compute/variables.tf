@@ -124,3 +124,9 @@ variable "database_url" {
   sensitive   = true
   default     = ""
 }
+
+variable "s3_bucket_arn" {
+  description = "ARN of the S3 uploads bucket for IAM policy"
+  type        = string
+  default     = ""
+}

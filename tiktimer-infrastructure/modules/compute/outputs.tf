@@ -73,5 +73,17 @@ output "task_role_arn" {
   value       = aws_iam_role.ecs_task_role.arn
 }
 
+output "migration_task_family" {
+  description = "Family name of the migration task definition for CD pipeline"
+  value       = aws_ecs_task_definition.migration.family
+}
 
+output "migration_task_arn" {
+  description = "ARN of the migration task definition"
+  value       = aws_ecs_task_definition.migration.arn
+}
 
+output "app_security_group_id" {
+  description = "Security group ID for the ECS tasks (needed for migration)"
+  value       = aws_security_group.ecs_tasks.id
+}
