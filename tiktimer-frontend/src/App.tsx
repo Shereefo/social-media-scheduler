@@ -7,6 +7,8 @@ import DashboardPage from './pages/DashboardPage';
 import PostsPage from './pages/PostsPage';
 import CreatePostPage from './pages/CreatePostPage';
 import TikTokCallbackPage from './pages/TikTokCallbackPage';
+import TermsOfServicePage from './pages/TermsOfServicePage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import Layout from './components/Layout';
 import LoadingSpinner from './components/LoadingSpinner';
 
@@ -67,9 +69,13 @@ function App() {
                 <RegisterPage />
               </PublicRoute>
             } />
-            
+
+            {/* Legal pages - publicly accessible */}
+            <Route path="/terms" element={<TermsOfServicePage />} />
+            <Route path="/privacy" element={<PrivacyPolicyPage />} />
+
             {/* TikTok OAuth callback - needs special handling */}
-            <Route path="/tiktok/callback" element={<TikTokCallbackPage />} />
+            <Route path="/api/v1/auth/tiktok/callback" element={<TikTokCallbackPage />} />
 
             {/* Protected routes */}
             <Route path="/" element={
