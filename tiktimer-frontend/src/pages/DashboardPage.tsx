@@ -1,11 +1,48 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
+import apiService from '../services/api';
 
 const DashboardPage: React.FC = () => {
   const { user } = useAuth();
+  const [connectingTikTok, setConnectingTikTok] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
 
   const hasTikTokConnection = user?.tiktok_access_token && user?.tiktok_token_expires_at;
+
+  const handleConnectTikTok = async () => {
+    try {
+      setConnectingTikTok(true);
+
+      // Get TikTok authorization URL from backend
+      const response = await apiService.getTikTokAuthUrl();
+
+      // Redirect user to TikTok OAuth page
+      window.location.href = response.authorization_url;
+    } catch (error) {
+      console.error('Error connecting to TikTok:', error);
+      alert('Failed to initiate TikTok connection. Please try again.');
+      setConnectingTikTok(false);
+    }
+  };
+
+  const handleDisconnectTikTok = async () => {
+    if (!confirm('Are you sure you want to disconnect your TikTok account?')) {
+      return;
+    }
+
+    try {
+      setDisconnecting(true);
+      await apiService.disconnectTikTok();
+
+      // Refresh the page to update user state
+      window.location.reload();
+    } catch (error) {
+      console.error('Error disconnecting TikTok:', error);
+      alert('Failed to disconnect TikTok account. Please try again.');
+      setDisconnecting(false);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -50,8 +87,12 @@ const DashboardPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            <button className="btn-secondary">
-              Disconnect
+            <button
+              onClick={handleDisconnectTikTok}
+              disabled={disconnecting}
+              className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {disconnecting ? 'Disconnecting...' : 'Disconnect'}
             </button>
           </div>
         ) : (
@@ -65,8 +106,12 @@ const DashboardPage: React.FC = () => {
             <p className="text-gray-600 mb-6">
               Connect your TikTok account to start scheduling and publishing content directly to your profile.
             </p>
-            <button className="btn-primary">
-              Connect TikTok Account
+            <button
+              onClick={handleConnectTikTok}
+              disabled={connectingTikTok}
+              className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {connectingTikTok ? 'Redirecting to TikTok...' : 'Connect TikTok Account'}
             </button>
           </div>
         )}
