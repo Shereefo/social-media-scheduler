@@ -51,6 +51,9 @@ class UserResponse(UserBase):
     is_active: bool
     is_superuser: bool
     created_at: datetime
+    tiktok_access_token: Optional[str] = None
+    tiktok_open_id: Optional[str] = None
+    tiktok_token_expires_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
