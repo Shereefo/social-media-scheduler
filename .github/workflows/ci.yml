@@ -21,34 +21,38 @@ jobs:
 
     # Set up python
     - name: Set up Python 3.12
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.12' 
-    
+        python-version: '3.12'
+        cache: 'pip'
+        cache-dependency-path: |
+          requirements.txt
+          requirements-dev.txt
+
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip 
-        pip install -r requirements.txt 
-        # Install development tools 
-        pip install pytest black flake8 mypy bandit
-        # Install additional test dependencies
-        pip install pytest-asyncio httpx 
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt 
       
     - name: Check code formatting with Black
       run: | 
           echo "Checking if code is properly formatted"
           black --check --diff backend/ 
 
-    - name: Lint with Flake8 
-      run: | 
+    - name: Lint with Flake8
+      run: |
         echo "Checking code style and quality ..."
-        flake8 backend/ --count --show-source --statistics --max-line-length=88
-        flake8 backend/ --count --max-complexity=10 --statistics --max-line-length=88
+        flake8 backend/ --count --show-source --statistics --max-line-length=88 --max-complexity=10
 
-    - name: Security scan with bandit 
-      run: | 
+    - name: Type check with mypy
+      run: |
+        echo "Running static type checks with mypy"
+        mypy backend/
+
+    - name: Security scan with bandit
+      run: |
         echo "Scanning for security issues..."
-        bandit -r backend/ -f json -o bandit-report.json || true
         bandit -r backend/
 
     - name: Run tests with pytest
@@ -60,6 +64,8 @@ jobs:
         SECRET_KEY: test-secret-key-for-ci
         TIKTOK_CLIENT_KEY: Test-key
         TIKTOK_CLIENT_SECRET: test-secret
+
+    # Artifact uploads removed per user preference
 
   # Job2: Validate Terraform      
   terraform-validate:
@@ -135,9 +141,5 @@ jobs:
 
     
     
-
-
-
-
 
 
