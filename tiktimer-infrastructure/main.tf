@@ -33,6 +33,22 @@ module "storage" {
   ]
 }
 
+# Frontend hosting module (S3 + CloudFront for React app)
+module "frontend" {
+  source = "./modules/frontend"
+
+  project_name = var.project_name
+  environment  = var.environment
+  aws_region   = var.aws_region
+
+  # Optional: Uncomment when you have a custom domain
+  # domain_name      = "app.tiktimer.com"
+  # route53_zone_id  = "Z1234567890ABC"
+
+  # Enable CloudFront access logs in production
+  enable_logging = var.environment == "prod" ? true : false
+}
+
 module "database" {
   source = "./modules/database"
 

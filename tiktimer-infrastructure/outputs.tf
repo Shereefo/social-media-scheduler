@@ -33,6 +33,28 @@ output "uploads_bucket_regional_domain_name" {
 }
 
 
+# Frontend module outputs
+output "frontend_url" {
+  description = "The URL where the frontend is deployed"
+  value       = "https://${module.frontend.cloudfront_domain_name}"
+}
+
+output "frontend_cloudfront_distribution_id" {
+  description = "CloudFront distribution ID (needed for cache invalidation)"
+  value       = module.frontend.cloudfront_distribution_id
+}
+
+output "frontend_s3_bucket" {
+  description = "S3 bucket name for frontend files"
+  value       = module.frontend.bucket_id
+}
+
+output "frontend_deployment_commands" {
+  description = "Commands to deploy and invalidate frontend cache"
+  value       = module.frontend.deployment_info
+}
+
+
 # Database module outputs
 output "db_instance_endpoint" {
   description = "The connection endpoint of the RDS instance"
