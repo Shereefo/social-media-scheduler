@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Dict, Optional, Any
+from urllib.parse import urlencode
 
 from ..models import User
 from ..config import settings
@@ -25,7 +26,8 @@ class TikTokAPI:
             "state": "state",  # You should generate a secure random state
         }
 
-        query_string = "&".join([f"{k}={v}" for k, v in params.items()])
+        # Use urlencode to properly encode URL parameters
+        query_string = urlencode(params)
         return f"{TikTokAPI.AUTH_URL}?{query_string}"
 
     @staticmethod
