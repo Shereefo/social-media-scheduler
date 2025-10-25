@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
 // Temporary inline type to avoid module resolution issues
 interface User {
   id: number;
