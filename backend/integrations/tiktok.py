@@ -115,7 +115,7 @@ class TikTokAPI:
     async def post_video(
         db: AsyncSession, user: User, video_file: bytes, caption: str
     ) -> Dict[str, Any]:
-        """Post a video to TikTok."""
+        """Post a video to TikTok using Content Posting API v2."""
         access_token = await TikTokAPI.ensure_valid_token(db, user)
         if not access_token:
             raise HTTPException(
@@ -123,60 +123,91 @@ class TikTokAPI:
                 detail="TikTok authentication required",
             )
 
-        # TikTok video upload is a multi-step process
-        # 1. Initialize upload
-        # 2. Upload video chunks
-        # 3. Complete upload and publish
+        # TikTok Content Posting API v2 upload flow:
+        # 1. Initialize upload - get upload_url and publish_id
+        # 2. Upload video chunks via PUT to upload_url
+        # 3. Video processes automatically (no separate publish step)
 
-        # This is a simplified version - in reality, you'd need to handle
-        # large file uploads with chunking, etc.
+        import math
 
-        async with httpx.AsyncClient() as client:
-            # Step 1: Initialize upload
+        async with httpx.AsyncClient(timeout=300.0) as client:
+            # Step 1: Initialize upload with FILE_UPLOAD method
+            video_size = len(video_file)
+            chunk_size = min(10 * 1024 * 1024, video_size)  # 10MB chunks or file size
+            total_chunks = math.ceil(video_size / chunk_size)
+
+            init_payload = {
+                "post_info": {
+                    "title": caption,
+                    "privacy_level": "SELF_ONLY",  # Options: PUBLIC_TO_EVERYONE, MUTUAL_FOLLOW_FRIENDS, SELF_ONLY
+                    "disable_duet": False,
+                    "disable_comment": False,
+                    "disable_stitch": False,
+                    "video_cover_timestamp_ms": 1000,
+                },
+                "source_info": {
+                    "source": "FILE_UPLOAD",
+                    "video_size": video_size,
+                    "chunk_size": chunk_size,
+                    "total_chunk_count": total_chunks,
+                }
+            }
+
             init_response = await client.post(
-                f"{TikTokAPI.BASE_URL}/video/init/",
-                headers={"Authorization": f"Bearer {access_token}"},
-                json={"post_info": {"title": caption, "privacy_level": "PUBLIC"}},
+                "https://open.tiktokapis.com/v2/post/publish/video/init/",
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-Type": "application/json; charset=UTF-8"
+                },
+                json=init_payload,
             )
 
             if init_response.status_code != 200:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Failed to initialize TikTok upload: "
-                    f"{init_response.text}",
+                    detail=f"Failed to initialize TikTok upload: {init_response.text}",
                 )
 
-            upload_data = init_response.json()
-            upload_id = upload_data["data"]["upload_id"]
+            init_data = init_response.json()
 
-            # Step 2: Upload video (simplified - in reality you'd chunk
-            # large videos)
-            upload_response = await client.post(
-                f"{TikTokAPI.BASE_URL}/video/upload/",
-                headers={"Authorization": f"Bearer {access_token}"},
-                files={"video": ("video.mp4", video_file, "video/mp4")},
-                data={"upload_id": upload_id},
-            )
-
-            if upload_response.status_code != 200:
+            # Check for API errors
+            if init_data.get("error", {}).get("code") != "ok":
+                error_msg = init_data.get("error", {}).get("message", "Unknown error")
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Failed to upload video to TikTok: "
-                    f"{upload_response.text}",
+                    detail=f"TikTok API error: {error_msg}",
                 )
 
-            # Step 3: Complete upload
-            complete_response = await client.post(
-                f"{TikTokAPI.BASE_URL}/video/publish/",
-                headers={"Authorization": f"Bearer {access_token}"},
-                json={"upload_id": upload_id},
-            )
+            upload_url = init_data["data"]["upload_url"]
+            publish_id = init_data["data"]["publish_id"]
 
-            if complete_response.status_code != 200:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Failed to publish video to TikTok: "
-                    f"{complete_response.text}",
+            # Step 2: Upload video chunks via PUT
+            for chunk_index in range(total_chunks):
+                start_byte = chunk_index * chunk_size
+                end_byte = min(start_byte + chunk_size, video_size) - 1
+                chunk_data = video_file[start_byte:end_byte + 1]
+
+                upload_response = await client.put(
+                    upload_url,
+                    content=chunk_data,
+                    headers={
+                        "Content-Type": "video/mp4",
+                        "Content-Length": str(len(chunk_data)),
+                        "Content-Range": f"bytes {start_byte}-{end_byte}/{video_size}",
+                    },
                 )
 
-            return complete_response.json()
+                if upload_response.status_code not in [200, 201, 202]:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Failed to upload video chunk {chunk_index + 1}/{total_chunks}: {upload_response.text}",
+                    )
+
+            # Step 3: Return success - video will process automatically
+            return {
+                "data": {
+                    "publish_id": publish_id,
+                    "status": "processing"
+                },
+                "message": "Video uploaded successfully and is processing"
+            }

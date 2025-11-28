@@ -16,7 +16,7 @@ services:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/scheduler
       - SECRET_KEY=your-secret-key-needs-to-be-updated
       - ALGORITHM=HS256
-      - SCHEDULER_SIMULATION_MODE=true  # Set to false for real TikTok API calls
+      - SCHEDULER_SIMULATION_MODE=false  # Set to false for real TikTok API calls
 
   db:
     image: postgres:15
