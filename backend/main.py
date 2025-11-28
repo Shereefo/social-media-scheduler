@@ -35,7 +35,7 @@ from .auth import (
     get_password_hash,
     get_current_active_user,
 )
-from .tasks import start_scheduler
+from .tasks import run_scheduler_loop
 from .routes import tiktok, tiktok_posts
 
 # CORS support for frontend
@@ -74,14 +74,19 @@ async def lifespan(app: FastAPI):
         logger.error("Failed to connect to the database after multiple attempts")
         raise Exception("Database connection failed")
 
-    # Start the scheduler
-    background_tasks = BackgroundTasks()
-    start_scheduler(background_tasks)
+    # Start the scheduler in a background task
+    scheduler_task = asyncio.create_task(run_scheduler_loop())
+    logger.info("Scheduler task started")
 
     yield  # This is where FastAPI serves requests
 
-    # Shutdown logic can go here
+    # Shutdown logic - cancel the scheduler task
     logger.info("Shutting down application")
+    scheduler_task.cancel()
+    try:
+        await scheduler_task
+    except asyncio.CancelledError:
+        logger.info("Scheduler task cancelled successfully")
 
 
 # Initialize FastAPI app with lifespan
@@ -99,6 +104,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://lovely-kangaroo-628d2a.netlify.app",  # Your Netlify domain
+        "https://drds1j9h9dec0.cloudfront.net",  # CloudFront frontend
         "http://localhost:3000",  # React development server
         "http://localhost:5173",  # Vite development server
         "http://127.0.0.1:5173",  # Vite on local IP
@@ -128,10 +134,18 @@ async def create_post(
     current_user: User = Depends(get_current_active_user),
 ):
     """Create a new scheduled post."""
+    from datetime import timezone
+
     try:
+        # Ensure scheduled_time is timezone-aware
+        scheduled_time = post.scheduled_time
+        if scheduled_time.tzinfo is None:
+            # If naive, assume UTC
+            scheduled_time = scheduled_time.replace(tzinfo=timezone.utc)
+
         db_post = Post(
             content=post.content,
-            scheduled_time=post.scheduled_time,
+            scheduled_time=scheduled_time,
             platform=post.platform,
             user_id=current_user.id,
         )
@@ -246,7 +260,11 @@ async def update_post(
         if updated_post.content is not None:
             post.content = updated_post.content
         if updated_post.scheduled_time is not None:
-            post.scheduled_time = updated_post.scheduled_time
+            from datetime import timezone
+            scheduled_time = updated_post.scheduled_time
+            if scheduled_time.tzinfo is None:
+                scheduled_time = scheduled_time.replace(tzinfo=timezone.utc)
+            post.scheduled_time = scheduled_time
         if updated_post.platform is not None:
             post.platform = updated_post.platform
 

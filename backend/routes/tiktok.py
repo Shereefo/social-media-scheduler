@@ -82,7 +82,11 @@ async def disconnect_tiktok(
 
 
 @router.post("/exchange-token")
-async def exchange_token(code_data: dict, db: AsyncSession = Depends(get_db)):
+async def exchange_token(
+    code_data: dict,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
     """Exchange authorization code for access token and store it."""
     try:
         code = code_data.get("code")
@@ -98,38 +102,22 @@ async def exchange_token(code_data: dict, db: AsyncSession = Depends(get_db)):
         # Log the token data (remove in production)
         logger.info(f"Received token data from TikTok: {token_data}")
 
-        # For testing: create or get a test user
-        # In production, you'd use the authenticated user
-        result = await db.execute(select(User).where(User.username == "test_user"))
-        user = result.scalars().first()
-
-        if not user:
-            # Create a test user if none exists
-            # Use proper password hashing even for test users
-            test_password = "test_password_123"  # nosec B105
-            user = User(
-                username="test_user",
-                email="test@example.com",
-                hashed_password=get_password_hash(test_password),
-            )
-            db.add(user)
-            await db.commit()
-            await db.refresh(user)
-
-        # Update user with token information
-        user.tiktok_access_token = token_data.get("access_token")
-        user.tiktok_refresh_token = token_data.get("refresh_token")
-        user.tiktok_open_id = token_data.get("open_id")
+        # Update the currently authenticated user with token information
+        current_user.tiktok_access_token = token_data.get("access_token")
+        current_user.tiktok_refresh_token = token_data.get("refresh_token")
+        current_user.tiktok_open_id = token_data.get("open_id")
 
         # Modern timezone-aware approach for expiration
-        user.tiktok_token_expires_at = datetime.now(timezone.utc) + timedelta(
+        current_user.tiktok_token_expires_at = datetime.now(timezone.utc) + timedelta(
             seconds=token_data.get("expires_in", 0)
         )
 
         await db.commit()
-        await db.refresh(user)
+        await db.refresh(current_user)
 
-        return {"message": "TikTok account connected successfully", "user_id": user.id}
+        logger.info(f"User {current_user.username} connected TikTok account")
+
+        return {"message": "TikTok account connected successfully", "user_id": current_user.id}
 
     except Exception as e:
         logger.error(f"Error exchanging token: {str(e)}")

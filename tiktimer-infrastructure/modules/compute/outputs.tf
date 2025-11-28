@@ -85,5 +85,5 @@ output "migration_task_arn" {
 
 output "app_security_group_id" {
   description = "Security group ID for the ECS tasks (needed for migration)"
-  value       = aws_security_group.ecs_tasks.id
+  value       = var.app_security_group_id
 }
