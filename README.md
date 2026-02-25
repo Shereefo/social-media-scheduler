@@ -1,15 +1,18 @@
 # TikTimer - TikTok Social Media Scheduler 📅
 
-> **Note:** This project currently focuses on production-ready backend services and AWS infrastructure. The frontend interface is planned for Phase 2 development - this showcase demonstrates cloud architecture, API development, and DevOps practices.
+> **Stack:** React/Vite frontend · FastAPI backend · PostgreSQL · AWS (ECS Fargate, RDS, S3, Secrets Manager, CloudFront) · Terraform IaC · GitHub Actions CI/CD
+>
+> The frontend is built and ready — live URL available after `terraform apply` provisions the CloudFront distribution.
 
 ## CI Status ✅
-All workflow steps now passing: formatting, linting, security scans, tests, and Docker builds.
+All workflow steps passing: formatting, linting, security scans, tests, and Docker builds.
 
 ## 📚 Documentation
 Comprehensive implementation notes and guides are available in the **[docs/](./docs/)** directory:
+- **[Architecture & Design](./docs/ARCHITECTURE.md)** - System design rationale, threat model, and trade-offs
+- **[Infrastructure Changes](./docs/CHANGES.md)** - Full 5-phase hardening change log with pre-deploy checklist
 - **[CICD Implementation Notes](./docs/cicd/CICD_IMPLEMENTATION_NOTES.md)** - Complete CI/CD journey
 - **[Migration Implementation](./docs/cicd/MIGRATION_IMPLEMENTATION_SUMMARY.md)** - Database migrations guide
-- **[Development Session](./docs/development/DEVELOPMENT_SESSION_SUMMARY.md)** - Frontend implementation
 
 ![image alt](https://github.com/Shereefo/social-media-scheduler/blob/bea4c94258fcc33c28c02bfcecad91f0d4533fac/TikTimer%20logo.png)
 
@@ -91,15 +94,16 @@ The diagram above illustrates TikTimer's complete architecture, including:
 ---
 
 ## Tech Stack
+- **Frontend:** React, Vite, TypeScript, Tailwind CSS
 - **Backend:** FastAPI, SQLAlchemy, Pydantic
 - **Database:** PostgreSQL with async support (via asyncpg)
-- **Authentication:** JWT-based with bcrypt password hashing
-- **External APIs:** TikTok API integration
+- **Authentication:** JWT with refresh token rotation, bcrypt, role-based access control
+- **Infrastructure:** AWS ECS Fargate, RDS, S3, Secrets Manager, CloudFront, CloudWatch
+- **CI/CD:** GitHub Actions with OIDC keyless AWS authentication
 - **Containerization:** Docker & Docker Compose
 - **API Documentation:** Swagger UI (auto-generated)
 - **Background Tasks:** Async task processing for scheduled posts
 - **Database Migrations:** Alembic for schema versioning
-- **Error Handling:** Middleware-based consistent error handling
 - **Configuration:** Environment-based with pydantic-settings
 
 ---
@@ -151,47 +155,48 @@ The diagram above illustrates TikTimer's complete architecture, including:
 ```
 social-media-scheduler/
 ├── backend/
-│   ├── __init__.py
-│   ├── auth.py               # Authentication module
-│   ├── config.py             # Centralized configuration
-│   ├── database.py           # Database connection
-│   ├── main.py               # FastAPI application
-│   ├── middleware.py         # Custom middleware
-│   ├── models.py             # SQLAlchemy models
+│   ├── auth.py               # JWT, refresh tokens, token_version revocation
+│   ├── config.py             # Centralized configuration (fail-loud, no fallbacks)
+│   ├── database.py           # Async SQLAlchemy engine
+│   ├── main.py               # FastAPI application + auth/refresh/logout endpoints
+│   ├── models.py             # SQLAlchemy models (User, Post, UserRole)
 │   ├── schema.py             # Pydantic schemas
 │   ├── storage.py            # File storage system
 │   ├── tasks.py              # Background task scheduler
 │   ├── integrations/
-│   │   ├── __init__.py
 │   │   └── tiktok.py         # TikTok API integration
-│   ├── routes/
-│   │   ├── __init__.py
-│   │   ├── tiktok.py         # TikTok authentication routes
-│   │   └── tiktok_posts.py   # TikTok post management routes
+│   └── routes/
+│       ├── tiktok.py         # TikTok authentication routes
+│       └── tiktok_posts.py   # TikTok post management routes
+├── tiktimer-frontend/        # React/Vite/TypeScript frontend (Tailwind CSS)
+├── tests/                    # Integration tests (28 tests, pytest-asyncio)
+│   ├── conftest.py           # Async fixtures, in-memory DB, dependency overrides
+│   ├── test_auth_integration.py
+│   └── test_posts.py
 ├── migrations/               # Alembic database migrations
-│   ├── versions/             # Migration versions
-│   ├── env.py                # Migration environment
-│   ├── README                # Migration documentation
-│   └── script.py.mako        # Migration template
+│   └── versions/
+├── scripts/                  # AWS operational scripts (audit, backup, logs)
 ├── tiktimer-infrastructure/  # Terraform infrastructure as code
-│   ├── modules/              # Terraform modules
+│   ├── bootstrap-state/      # S3 + DynamoDB for remote state
+│   ├── environments/         # Per-env tfvars and backend config
+│   ├── modules/
 │   │   ├── networking/       # VPC, subnets, security groups
-│   │   ├── database/         # RDS PostgreSQL configuration
-│   │   ├── storage/          # S3 buckets and policies
-│   │   ├── compute/          # ECS Fargate and ALB
-│   │   └── security/         # WAF, GuardDuty, Security Hub
-│   ├── main.tf               # Main Terraform configuration
-│   ├── variables.tf          # Input variables
-│   ├── outputs.tf            # Output values
-│   └── providers.tf          # AWS provider configuration
-├── .github/workflows/        # GitHub Actions CI/CD
-│   └── ci.yml                # Continuous integration pipeline
-├── Dockerfile                # Docker configuration
-├── docker-compose.yml        # Docker Compose setup
-├── requirements.txt          # Python dependencies
-├── alembic.ini               # Alembic configuration
-├── setup.py                  # Package setup
-└── .env.example              # Example environment variables
+│   │   ├── database/         # RDS PostgreSQL
+│   │   ├── storage/          # S3 buckets
+│   │   ├── compute/          # ECS Fargate, ALB
+│   │   ├── secrets/          # AWS Secrets Manager
+│   │   ├── monitoring/       # CloudWatch alarms & dashboard
+│   │   ├── frontend/         # S3 + CloudFront distribution
+│   │   └── security/         # WAF, GuardDuty, Security Hub (opt-in)
+│   ├── main.tf
+│   ├── variables.tf
+│   └── outputs.tf
+├── docs/                     # Architecture, change log, diagrams, references
+├── .github/workflows/        # GitHub Actions CI + CD (OIDC)
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
+└── .env.example
 ```
 
 ---
@@ -271,10 +276,9 @@ TIKTOK_CLIENT_KEY=your-tiktok-client-key
 TIKTOK_CLIENT_SECRET=your-tiktok-client-secret
 TIKTOK_REDIRECT_URI=http://localhost:8000/api/v1/auth/tiktok/callback
 
-# AWS Settings (for future deployment)
-# AWS_ACCESS_KEY_ID=your-aws-access-key
-# AWS_SECRET_ACCESS_KEY=your-aws-secret-key
-# AWS_REGION=us-east-1
+# AWS (CI/CD uses OIDC — no static keys needed)
+# For local Terraform runs, configure with: aws configure
+AWS_REGION=us-east-2
 ```
 
 ---
@@ -283,7 +287,9 @@ TIKTOK_REDIRECT_URI=http://localhost:8000/api/v1/auth/tiktok/callback
 
 ### Authentication
 - `POST /register` - Register a new user
-- `POST /token` - Login and get access token
+- `POST /token` - Login and get access + refresh token pair
+- `POST /auth/refresh` - Rotate refresh token and get new access token
+- `POST /auth/logout` - Revoke all tokens server-side
 - `GET /users/me` - Get current user information
 
 ### Posts
@@ -337,7 +343,12 @@ The application uses JWT-based authentication:
         -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
    ```
 
-4. **Logout (Client-side):** Simply discard the token on the client-side. The server doesn't store token state.
+4. **Logout (Server-side):**
+   ```bash
+   curl -X POST http://localhost:8000/auth/logout \
+        -H "Authorization: Bearer your-access-token"
+   ```
+   This increments the user's `token_version`, immediately invalidating all outstanding JWTs and the refresh token server-side. Discarding tokens client-side alone is not sufficient.
 
 ---
 
@@ -478,6 +489,10 @@ Table: users
 - hashed_password (String)
 - is_active (Boolean)
 - is_superuser (Boolean)
+- role (Enum: 'user' | 'admin', NOT NULL, default 'user')
+- refresh_token_hash (String, Nullable)
+- refresh_token_expires_at (DateTime with timezone, Nullable)
+- token_version (Integer, NOT NULL, default 0)
 - created_at (DateTime)
 - updated_at (DateTime)
 - tiktok_access_token (String, Nullable)
@@ -866,36 +881,21 @@ During the implementation of the AWS infrastructure with Terraform, we encounter
 
 #### Container Configuration
 - **Challenge**: Passing sensitive configuration securely to containers.
-- **Solution**: Used AWS Systems Manager Parameter Store for secrets and configured the ECS task definition to retrieve them securely at runtime.
+- **Solution**: AWS Secrets Manager with ECS native injection — credentials are resolved at task launch via `valueFrom` JSON key selectors and injected as environment variables. Plaintext values never appear in task definition documents or Terraform state.
 
 ### Future Enhancements
 
-The following infrastructure components are planned for future implementation:
-
-#### CI/CD Pipeline
-- GitHub Actions workflow for automated deployments
-- Staging and production environments
-- Infrastructure validation tests
-
-#### Advanced Monitoring
-- CloudWatch dashboards for key metrics
-- CloudWatch alarms for critical thresholds
-- Log metric filters for application insights
-
 #### DNS and SSL
 - Route 53 for domain management
-- ACM for SSL/TLS certificates
-- HTTPS enforcement
+- ACM for SSL/TLS certificates and HTTPS enforcement
 
-#### Enhanced Security
-- WAF for web application protection
-- GuardDuty for threat detection
-- Security Hub for compliance monitoring
+#### Enhanced Security (opt-in, feature-flagged)
+- WAF, GuardDuty, and Security Hub modules are implemented — enable via `terraform.tfvars`
 
 #### Cost Management
-- Reserved Instances for production workloads
-- Auto-scaling based on usage patterns
-- Scheduled scaling for predictable workloads
+- Reserved Instances for production RDS and ECS workloads
+- Fargate Spot for non-critical background tasks
+- Scheduled scaling for predictable creator peak hours
 
 ---
 
@@ -1134,10 +1134,12 @@ This security implementation transforms TikTimer from a development project into
 
 ## Current Project Status
 
-The project is currently in active development with the following components implemented:
+The project is production-ready and awaiting `terraform apply`. All components are implemented:
 - ✅ Core API framework with FastAPI
 - ✅ Database models and migrations with SQLAlchemy and Alembic
-- ✅ User authentication system
+- ✅ Refresh token rotation with bcrypt hash storage
+- ✅ Server-side token revocation (`token_version` counter)
+- ✅ Role-based access control (`user` / `admin`)
 - ✅ TikTok OAuth integration
 - ✅ Post scheduling and management
 - ✅ File upload and storage system
@@ -1145,9 +1147,13 @@ The project is currently in active development with the following components imp
 - ✅ Docker containerization
 - ✅ Error handling middleware
 - ✅ Health check endpoints
-- ✅ AWS infrastructure code with Terraform modules
-- ✅ CI/CD pipeline with GitHub Actions
-- ✅ Enterprise security architecture implementation
+- ✅ React/Vite frontend (Tailwind CSS, TikTok-themed UI)
+- ✅ AWS infrastructure code with Terraform (88 resources)
+- ✅ AWS Secrets Manager for credential injection (no plaintext in task definitions)
+- ✅ Terraform remote state (S3 + DynamoDB locking)
+- ✅ GitHub Actions OIDC (keyless AWS authentication)
+- ✅ CloudWatch alarms + dashboard (9 alarms across ECS/ALB/RDS)
+- ✅ 28 integration tests (auth + posts, all passing)
 
 ---
 
@@ -1199,16 +1205,18 @@ The project is currently in active development with the following components imp
 
 ## Next Steps
 
-### Phase 2: User Experience & Frontend
-- [ ] Create a frontend interface using React or Vue.js
-- [ ] Add proper user management with roles and permissions
-- [ ] Add admin dashboard for user management
-- [ ] Enhance documentation with examples and usage scenarios
+### Production Deployment
+- [ ] Run `terraform apply` to provision AWS infrastructure
+- [ ] Update Secrets Manager with real credentials (SECRET_KEY, TikTok API keys)
+- [ ] Add `AWS_DEPLOY_ROLE_ARN` GitHub Secret (from `terraform output github_actions_role_arn`)
+- [ ] Confirm SNS email subscription for CloudWatch alerts
+- [ ] Configure custom domain with Route 53 + ACM certificate (HTTPS)
 
-### Phase 3: Feature Expansion
-- [ ] Implement advanced scheduling features (recurring posts, post series)
-- [ ] Add additional social media platform integrations (Twitter, Instagram, etc.)
-- [ ] Implement analytics for post performance
+### Feature Expansion
+- [ ] Advanced scheduling features (recurring posts, post series)
+- [ ] Additional social media platform integrations (Instagram, Twitter/X)
+- [ ] Analytics dashboard for post performance
+- [ ] Multi-device refresh token support
 
 ---
 
