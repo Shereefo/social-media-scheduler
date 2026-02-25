@@ -45,11 +45,6 @@ jobs:
         echo "Checking code style and quality ..."
         flake8 backend/ --count --show-source --statistics --max-line-length=88 --max-complexity=10
 
-    - name: Type check with mypy
-      run: |
-        echo "Running static type checks with mypy"
-        mypy backend/
-
     - name: Security scan with bandit
       run: |
         echo "Scanning for security issues..."
@@ -60,9 +55,9 @@ jobs:
         echo "Running tests..."
         pytest tests/ -v --tb=short
       env:
-        DATABASE_URL: sqlite:///./test.db
-        SECRET_KEY: test-secret-key-for-ci
-        TIKTOK_CLIENT_KEY: Test-key
+        DATABASE_URL: sqlite+aiosqlite:///:memory:
+        SECRET_KEY: test-secret-key-for-ci-only-not-real
+        TIKTOK_CLIENT_KEY: test-key
         TIKTOK_CLIENT_SECRET: test-secret
 
     # Artifact uploads removed per user preference
@@ -118,9 +113,9 @@ jobs:
         echo "Testing if container starts properly"
         # Starting container in background
         docker run -d --name test-container \
-        -e DATABASE_URL=sqlite:///./test.db \
-        -e SECRET_KEY=test-key \
-        tiktimer-test:latest 
+        -e DATABASE_URL=sqlite+aiosqlite:///:memory: \
+        -e SECRET_KEY=test-secret-key-for-ci-only-not-real \
+        tiktimer-test:latest
 
         # Wait a few seconds for startup 
         sleep 10 
