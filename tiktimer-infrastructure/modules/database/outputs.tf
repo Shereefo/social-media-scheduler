@@ -49,3 +49,8 @@ output "db_password" {
   value       = var.db_password != "" ? var.db_password : random_password.db_password[0].result
   sensitive   = true
 }
+
+output "db_instance_identifier" {
+  description = "RDS instance identifier used as CloudWatch dimension for alarms"
+  value       = aws_db_instance.main.identifier
+}

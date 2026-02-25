@@ -2,6 +2,8 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
 
+from .models import UserRole
+
 
 class PostBase(BaseModel):
     content: str
@@ -50,8 +52,10 @@ class UserResponse(UserBase):
     id: int
     is_active: bool
     is_superuser: bool
+    role: UserRole
     created_at: datetime
-    tiktok_access_token: Optional[str] = None
+    # tiktok_access_token intentionally omitted — bearer tokens must not
+    # be returned in API responses. Use tiktok_open_id to confirm linkage.
     tiktok_open_id: Optional[str] = None
     tiktok_token_expires_at: Optional[datetime] = None
 
@@ -62,8 +66,14 @@ class UserResponse(UserBase):
 # Token schemas
 class Token(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str
 
 
 class TokenData(BaseModel):
     username: Optional[str] = None
+    version: Optional[int] = None
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str

@@ -65,7 +65,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "frontend" {
 
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"  # AWS-managed encryption keys
+      sse_algorithm = "AES256" # AWS-managed encryption keys
     }
   }
 
@@ -171,7 +171,7 @@ resource "aws_cloudfront_distribution" "frontend" {
 
   origin {
     # Unique ID for this origin (can have multiple origins)
-    origin_id   = "S3-${aws_s3_bucket.frontend.id}"
+    origin_id = "S3-${aws_s3_bucket.frontend.id}"
 
     # The S3 bucket's regional domain name
     # Example: tiktimer-prod-frontend.s3.us-east-1.amazonaws.com
@@ -232,7 +232,7 @@ resource "aws_cloudfront_distribution" "frontend" {
     error_code            = 404
     response_code         = 200
     response_page_path    = "/index.html"
-    error_caching_min_ttl = 300  # Cache the 404→200 mapping for 5 minutes
+    error_caching_min_ttl = 300 # Cache the 404→200 mapping for 5 minutes
   }
 
   custom_error_response {

@@ -1,0 +1,24 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Frontend (Vite)",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 5173,
+      "cwd": "tiktimer-frontend"
+    },
+    {
+      "name": "Full Stack (Docker Compose)",
+      "runtimeExecutable": "docker-compose",
+      "runtimeArgs": ["up"],
+      "port": 8000
+    },
+    {
+      "name": "Backend API (Direct uvicorn)",
+      "runtimeExecutable": "uvicorn",
+      "runtimeArgs": ["backend.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"],
+      "port": 8000
+    }
+  ]
+}

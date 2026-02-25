@@ -1,0 +1,8 @@
+environment         = "staging"
+aws_region          = "us-east-2"
+desired_count       = 2
+enable_waf          = true
+enable_guardduty    = true
+enable_security_hub = false
+db_multi_az         = false
+single_nat_gateway  = true

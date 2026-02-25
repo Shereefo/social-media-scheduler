@@ -5,6 +5,11 @@
 ### **Start Here**
 - **[README_FOR_NEXT_SESSION.md](./README_FOR_NEXT_SESSION.md)** - Quick start for new chat sessions
 
+### **Architecture & Design**
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - System design rationale, threat model, and trade-offs for the infrastructure & identity hardening work
+- **[CHANGES.md](./CHANGES.md)** - File-by-file change log for all 5 hardening phases with pre-apply checklist
+- **[architecture-diagram.html](./architecture-diagram.html)** - Visual Mermaid diagrams (CI/CD pipeline, infra layers, IAM roles, auth sequence)
+
 ### **CI/CD Pipeline**
 - **[CICD_IMPLEMENTATION_NOTES.md](./cicd/CICD_IMPLEMENTATION_NOTES.md)** - Complete implementation history and all issues fixed
 - **[MIGRATION_IMPLEMENTATION_SUMMARY.md](./cicd/MIGRATION_IMPLEMENTATION_SUMMARY.md)** - Database migration implementation guide
@@ -20,6 +25,8 @@
 ---
 
 ## 🎯 Quick Navigation
+
+**Understanding the architecture?** → [Architecture & Design Rationale](./ARCHITECTURE.md)
 
 **Deploying infrastructure?** → [Quick Reference](./references/QUICK_REFERENCE.md#-quick-start-commands)
 

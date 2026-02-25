@@ -118,10 +118,15 @@ variable "container_image" {
   default     = "public.ecr.aws/nginx/nginx:latest" # Default to nginx for testing
 }
 
-variable "database_url" {
-  description = "Database connection URL"
+variable "db_secret_arn" {
+  description = "ARN of the Secrets Manager secret containing database credentials (injected as DATABASE_URL by ECS at task launch)"
   type        = string
-  sensitive   = true
+  default     = ""
+}
+
+variable "app_secret_arn" {
+  description = "ARN of the Secrets Manager secret containing application secrets (SECRET_KEY, TIKTOK_CLIENT_KEY, TIKTOK_CLIENT_SECRET)"
+  type        = string
   default     = ""
 }
 

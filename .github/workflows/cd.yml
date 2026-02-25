@@ -11,6 +11,12 @@ on:
         default: false
         type: boolean
 
+# Required for OIDC token minting — GitHub will not issue the JWT
+# unless the workflow explicitly requests id-token: write permission.
+permissions:
+  id-token: write   # Allows requesting the OIDC JWT
+  contents: read    # Allows checkout
+
 env:
   AWS_REGION: us-east-2
   ECR_REPOSITORY: tiktimer-dev
@@ -35,20 +41,15 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+        role-session-name: github-deploy-${{ github.run_id }}
         aws-region: ${{ env.AWS_REGION }}
 
     - name: Verify AWS credentials
       run: |
-        echo "Checking AWS credentials availability..."
-        if [ -n "${{ secrets.AWS_ACCESS_KEY_ID }}" ] && [ -n "${{ secrets.AWS_SECRET_ACCESS_KEY }}" ]; then
-          echo "AWS credentials found, verifying access..."
-          aws sts get-caller-identity
-          echo "AWS credentials verified successfully"
-        else
-          echo "AWS credentials not configured - running in validation-only mode"
-        fi
+        echo "Verifying OIDC-assumed role credentials..."
+        aws sts get-caller-identity
+        echo "AWS credentials verified successfully"
 
     - name: Check infrastructure status
       id: check-infra
@@ -100,8 +101,8 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+        role-session-name: github-deploy-${{ github.run_id }}
         aws-region: ${{ env.AWS_REGION }}
 
     - name: Login to Amazon ECR
@@ -153,8 +154,8 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+        role-session-name: github-deploy-${{ github.run_id }}
         aws-region: ${{ env.AWS_REGION }}
 
     - name: Run database migration via ECS Task
@@ -227,8 +228,8 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+        role-session-name: github-deploy-${{ github.run_id }}
         aws-region: ${{ env.AWS_REGION }}
 
     - name: Download current task definition
@@ -290,8 +291,8 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+        role-session-name: github-deploy-${{ github.run_id }}
         aws-region: ${{ env.AWS_REGION }}
 
     - name: Test application health

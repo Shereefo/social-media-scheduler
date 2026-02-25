@@ -89,9 +89,3 @@ variable "db_apply_immediately" {
   default     = true
 }
 
-variable "database_url" {
-  description = "Database connection URL"
-  type        = string
-  sensitive   = true
-  default     = ""
-}

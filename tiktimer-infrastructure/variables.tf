@@ -9,6 +9,11 @@ variable "environment" {
   description = "Deployment environment (dev/staging/prod)"
   type        = string
   default     = "dev"
+
+  validation {
+    condition     = contains(["dev", "staging", "prod"], var.environment)
+    error_message = "environment must be one of: dev, staging, prod."
+  }
 }
 
 variable "project_name" {
@@ -166,16 +171,6 @@ variable "max_capacity" {
   default     = 4
 }
 
-# Database URL for the container - constructed from DB parameters
-variable "database_url" {
-  description = "Database connection URL"
-  type        = string
-  sensitive   = true
-  default     = "" # Will be constructed dynamically if empty
-}
-
-
-
 # Security Variables
 variable "enable_waf" {
   description = "Enable WAF for the application"
@@ -199,4 +194,11 @@ variable "enable_security_hub" {
   description = "Enable Security Hub for security standards"
   type        = bool
   default     = false
+}
+
+# Monitoring
+variable "alert_email" {
+  description = "Email address for CloudWatch alarm notifications via SNS. Leave empty to skip email subscription (add manually post-apply)."
+  type        = string
+  default     = ""
 }

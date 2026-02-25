@@ -125,3 +125,20 @@ output "guardduty_detector_id" {
   description = "ID of the GuardDuty detector"
   value       = var.enable_guardduty ? module.security.guardduty_detector_id : null
 }
+
+# GitHub Actions OIDC outputs
+output "github_actions_role_arn" {
+  description = "ARN of the GitHub Actions IAM role — set this as the AWS_DEPLOY_ROLE_ARN GitHub Secret after terraform apply"
+  value       = aws_iam_role.github_actions.arn
+}
+
+# Monitoring outputs
+output "alerts_sns_topic_arn" {
+  description = "ARN of the CloudWatch alerts SNS topic — add email/PagerDuty subscriptions here post-apply"
+  value       = module.monitoring.sns_topic_arn
+}
+
+output "dashboard_url" {
+  description = "Direct URL to the CloudWatch dashboard"
+  value       = module.monitoring.dashboard_url
+}

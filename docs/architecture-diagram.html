@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>TikTimer — Production Architecture</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      padding: 40px 24px;
+      min-height: 100vh;
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+      color: #f8fafc;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-bottom: 40px;
+    }
+    .diagram-section {
+      background: #1e2130;
+      border: 1px solid #2d3348;
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 28px;
+      max-width: 1100px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .diagram-section h2 {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #fe2c55;
+      margin-bottom: 24px;
+    }
+    .mermaid {
+      display: flex;
+      justify-content: center;
+    }
+    .mermaid svg {
+      max-width: 100%;
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: center;
+      margin-top: 32px;
+      max-width: 1100px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      color: #94a3b8;
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+<h1>TikTimer — Production Architecture</h1>
+<p class="subtitle">AWS ECS Fargate · GitHub Actions OIDC · Secrets Manager · CloudWatch</p>
+
+<!-- CI/CD Flow -->
+<div class="diagram-section">
+  <h2>CI/CD Pipeline — Developer → Production</h2>
+  <div class="mermaid">
+flowchart LR
+    DEV(["👨‍💻 Developer\nPush to main"]):::actor
+
+    subgraph GH["GitHub Actions"]
+      direction TB
+      V["① Validate\nInfra exists?"]
+      B["② Build\nDocker image"]
+      M["③ Migrate\nalembic upgrade head"]
+      D["④ Deploy\nUpdate ECS service"]
+      H["⑤ Health Check\nGET /health"]
+    end
+
+    subgraph AWS["AWS"]
+      direction TB
+      OIDC["OIDC Provider\ntoken.actions.githubusercontent.com"]
+      ROLE["IAM Role\ngithub-actions\n1hr temp credentials"]
+      ECR["ECR\nContainer Registry"]
+      ECS["ECS Fargate\nMigration Task"]
+      SVC["ECS Service\nRolling Deploy"]
+      ALB["ALB\n/health"]
+    end
+
+    DEV --> V
+    V -- "Request JWT" --> OIDC
+    OIDC -- "Verify repo scope" --> ROLE
+    ROLE -- "Temp credentials" --> B
+    B -- "docker push" --> ECR
+    ECR --> M
+    M -- "Run migration task" --> ECS
+    ECS -- "alembic upgrade head" --> SVC
+    D -- "update-service" --> SVC
+    SVC --> H
+    H -- "curl /health" --> ALB
+
+    classDef actor fill:#fe2c55,color:#fff,stroke:none
+    classDef aws fill:#232f3e,color:#ff9900,stroke:#ff9900
+    classDef gh fill:#24292e,color:#58a6ff,stroke:#58a6ff
+  </div>
+</div>
+
+<!-- Infrastructure Layers -->
+<div class="diagram-section">
+  <h2>Infrastructure Layers — Request to Database</h2>
+  <div class="mermaid">
+flowchart TD
+    USER(["🌍 User\nbrowser"]):::actor
+
+    subgraph CDN["Edge — CloudFront CDN"]
+      CF["CloudFront\nDistribution\n HTTPS · HTTP/2 · Gzip"]
+      S3F["S3 Bucket\nReact SPA\n private · OAI only"]
+    end
+
+    subgraph PUB["Public Subnet — us-east-2a/b/c"]
+      ALB["Application\nLoad Balancer\n:80/:443"]
+    end
+
+    subgraph APP["App Subnet — Private"]
+      direction LR
+      T1["ECS Task 1\nFastAPI :8000"]
+      T2["ECS Task 2\nFastAPI :8000"]
+    end
+
+    subgraph DATA["Data Subnet — Private  No internet route"]
+      RDS[("RDS PostgreSQL 15\nMulti-AZ capable\nEncrypted at rest")]
+    end
+
+    subgraph SHARED["Shared AWS Services"]
+      SM["Secrets Manager\ndb-credentials\napp-secrets"]
+      S3U["S3 Uploads\nVideo files\nLifecycle: 365d"]
+      CW["CloudWatch\n9 Alarms\nDashboard"]
+      SNS["SNS Topic\nEmail alerts"]
+    end
+
+    USER -- "tiktimer.app" --> CF
+    CF -- "index.html / assets" --> S3F
+    CF -- "API calls" --> ALB
+    ALB -- "health checks\ntarget group" --> T1
+    ALB --> T2
+    T1 & T2 -- "inject at launch\nnever in task def" --> SM
+    T1 & T2 -- "PostgreSQL :5432" --> RDS
+    T1 & T2 -- "video upload/fetch" --> S3U
+    T1 & T2 -- "logs + metrics" --> CW
+    CW -- "threshold breach" --> SNS
+
+    classDef actor fill:#fe2c55,color:#fff,stroke:none
+    classDef privatenode fill:#1a2332,color:#7dd3fc,stroke:#0ea5e9,stroke-width:1.5px
+    classDef datanode fill:#1a2820,color:#86efac,stroke:#22c55e,stroke-width:1.5px
+    classDef sharednode fill:#2a1f1a,color:#fdba74,stroke:#f97316,stroke-width:1.5px
+    class T1,T2 privatenode
+    class RDS datanode
+    class SM,S3U,CW,SNS sharednode
+  </div>
+</div>
+
+<!-- IAM Roles -->
+<div class="diagram-section">
+  <h2>IAM — Who Can Do What</h2>
+  <div class="mermaid">
+flowchart LR
+    subgraph ACTORS["Actors"]
+      GHA["GitHub Actions\nRunner"]:::actor
+      EXEC["ECS Task\nExecution Role"]:::iamrole
+      TASK["ECS Task\nRuntime Role"]:::iamrole
+      NOBODY["❌ Anyone Else"]:::blocked
+    end
+
+    subgraph PERMS["Permissions — Least Privilege"]
+      P1["ECR push/pull\nECS update-service\nIAM PassRole ←scoped\nCloudWatch logs read"]
+      P2["Secrets Manager GetSecretValue\n2 specific ARNs only\nCloudWatch PutLogEvents"]
+      P3["S3 PutObject / GetObject\nuploads bucket only"]
+      P4["🚫 RDS direct access\n🚫 Secrets Manager\n🚫 EC2 / IAM changes"]
+    end
+
+    GHA -- "OIDC → 1hr STS token\nscoped to this repo" --> P1
+    EXEC -- "at container launch\nfetches secrets" --> P2
+    TASK -- "app runtime\nvideo storage" --> P3
+    NOBODY --> P4
+
+    classDef actor fill:#fe2c55,color:#fff,stroke:none
+    classDef iamrole fill:#232f3e,color:#ff9900,stroke:#ff9900
+    classDef blocked fill:#3b1f1f,color:#f87171,stroke:#ef4444
+  </div>
+</div>
+
+<!-- Identity / Auth -->
+<div class="diagram-section">
+  <h2>Identity System — User Auth Flow</h2>
+  <div class="mermaid">
+sequenceDiagram
+    actor U as User
+    participant FE as React Frontend
+    participant API as FastAPI
+    participant DB as RDS PostgreSQL
+
+    U->>FE: Login (username + password)
+    FE->>API: POST /token
+    API->>DB: Verify bcrypt(password)
+    DB-->>API: User row (token_version=N)
+    API->>DB: Store bcrypt(refresh_token)
+    API-->>FE: access_token (JWT, 30min, version=N)\n+ refresh_token (opaque, 7 days)
+
+    Note over FE,API: Every protected request
+    FE->>API: GET /posts/ Bearer access_token
+    API->>API: Decode JWT → version=N
+    API->>DB: SELECT user WHERE username=X
+    DB-->>API: token_version=N
+    API->>API: N == N ✓  proceed
+
+    Note over FE,API: Logout / revocation
+    FE->>API: POST /auth/logout
+    API->>DB: token_version = N+1\nrefresh_token_hash = NULL
+    API-->>FE: 204 No Content
+    FE->>API: GET /posts/ old token (version=N)
+    API->>DB: SELECT token_version
+    DB-->>API: N+1
+    API-->>FE: 401 N ≠ N+1
+
+    Note over FE,API: Token refresh (silent re-auth)
+    FE->>API: POST /auth/refresh {refresh_token}
+    API->>DB: bcrypt.verify(token, hash) + expiry check
+    DB-->>API: Valid
+    API->>DB: Overwrite hash (rotation)
+    API-->>FE: new access_token + new refresh_token
+  </div>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#fe2c55"></div>User / Developer</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ff9900"></div>AWS Managed</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#0ea5e9"></div>Private compute (no public IP)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div>Data layer (no internet route)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f97316"></div>Shared services</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Blocked / denied</div>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#1e2130',
+      primaryTextColor: '#e2e8f0',
+      primaryBorderColor: '#2d3348',
+      lineColor: '#475569',
+      secondaryColor: '#2d3348',
+      tertiaryColor: '#1a2332',
+      background: '#0f1117',
+      mainBkg: '#1e2130',
+      nodeBorder: '#2d3348',
+      clusterBkg: '#161b27',
+      titleColor: '#f8fafc',
+      edgeLabelBackground: '#1e2130',
+      actorBkg: '#1e2130',
+      actorBorder: '#475569',
+      actorTextColor: '#e2e8f0',
+      actorLineColor: '#475569',
+      signalColor: '#94a3b8',
+      signalTextColor: '#e2e8f0',
+      labelBoxBkgColor: '#1e2130',
+      labelBoxBorderColor: '#475569',
+      labelTextColor: '#e2e8f0',
+      loopTextColor: '#e2e8f0',
+      noteBorderColor: '#475569',
+      noteBkgColor: '#2d3348',
+      noteTextColor: '#e2e8f0',
+      activationBorderColor: '#fe2c55',
+      activationBkgColor: '#3b1a22',
+      sequenceNumberColor: '#fe2c55',
+    },
+    flowchart: { curve: 'basis', padding: 20 },
+    sequence: { actorMargin: 60, width: 160, height: 50, boxMargin: 10 }
+  });
+</script>
+</body>
+</html>

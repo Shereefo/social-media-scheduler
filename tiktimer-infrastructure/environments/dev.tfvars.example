@@ -1,0 +1,8 @@
+environment        = "dev"
+aws_region         = "us-east-2"
+desired_count      = 2
+enable_waf         = false
+enable_guardduty   = false
+enable_security_hub = false
+db_multi_az        = false
+single_nat_gateway = true

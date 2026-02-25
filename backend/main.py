@@ -28,12 +28,17 @@ from .schema import (
     UserCreate,
     UserResponse,
     Token,
+    RefreshRequest,
 )
 from .auth import (
     authenticate_user,
     create_access_token,
+    create_refresh_token,
+    rotate_refresh_token,
+    revoke_tokens,
     get_password_hash,
     get_current_active_user,
+    get_user_by_username,
 )
 from .tasks import run_scheduler_loop
 from .routes import tiktok, tiktok_posts
@@ -381,10 +386,82 @@ async def login_for_access_token(
         )
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
+        data={"sub": user.username, "version": user.token_version},
+        expires_delta=access_token_expires,
     )
+    refresh_token = await create_refresh_token(db, user)
     logger.info(f"User logged in: {user.username}")
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+    }
+
+
+@app.post("/auth/refresh", response_model=Token, tags=["auth"])
+async def refresh_access_token(
+    body: RefreshRequest, db: AsyncSession = Depends(get_db)
+):
+    """Exchange a valid refresh token for a new access + refresh token pair.
+
+    The old refresh token is immediately invalidated (rotation).
+    Returns 401 if the token is missing, expired, or already used.
+    """
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid or expired refresh token",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    # We need to locate the user — refresh tokens are opaque, not JWTs.
+    # We identify the user by scanning all users whose hash matches.
+    # For this codebase's scale, a username claim stored client-side (or
+    # a separate lookup table) would be more efficient; we keep it simple here.
+    from .auth import pwd_context as _ctx
+
+    result = await db.execute(select(User).where(User.refresh_token_hash.isnot(None)))
+    users = result.scalars().all()
+
+    user = None
+    for candidate in users:
+        try:
+            if _ctx.verify(body.refresh_token, candidate.refresh_token_hash):
+                user = candidate
+                break
+        except Exception:
+            continue
+
+    if user is None:
+        raise credentials_exception
+
+    # rotate_refresh_token validates expiry and issues a new raw token
+    new_raw_refresh = await rotate_refresh_token(db, user, body.refresh_token)
+
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.username, "version": user.token_version},
+        expires_delta=access_token_expires,
+    )
+    logger.info(f"Refreshed tokens for user: {user.username}")
+    return {
+        "access_token": access_token,
+        "refresh_token": new_raw_refresh,
+        "token_type": "bearer",
+    }
+
+
+@app.post("/auth/logout", status_code=status.HTTP_204_NO_CONTENT, tags=["auth"])
+async def logout(
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Revoke all tokens for the authenticated user.
+
+    Bumps token_version (invalidating all outstanding JWTs) and clears
+    the stored refresh token hash.  The client should discard its tokens.
+    """
+    await revoke_tokens(db, current_user)
+    logger.info(f"User logged out (tokens revoked): {current_user.username}")
 
 
 @app.get("/health", tags=["health"])
