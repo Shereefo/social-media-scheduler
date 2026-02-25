@@ -87,3 +87,13 @@ output "app_security_group_id" {
   description = "Security group ID for the ECS tasks (needed for migration)"
   value       = var.app_security_group_id
 }
+
+output "alb_arn_suffix" {
+  description = "ALB ARN suffix used as CloudWatch dimension (e.g. app/name/id)"
+  value       = aws_lb.main.arn_suffix
+}
+
+output "target_group_arn_suffix" {
+  description = "Target group ARN suffix used as CloudWatch dimension"
+  value       = aws_lb_target_group.app.arn_suffix
+}

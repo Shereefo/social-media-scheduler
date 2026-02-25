@@ -21,3 +21,4 @@ uploads/
 *.tfstate
 *.tfstate.backup
 *.tfvars
+backend-*.hcl

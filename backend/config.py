@@ -10,17 +10,16 @@ class Settings(BaseSettings):
     API_VERSION: str = "v1"
     API_PREFIX: str = f"/api/{API_VERSION}"
 
-    # Security
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-needs-to-be-updated")
-    ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(
-        os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES") or "30"
-    )
+    # Security — no fallback defaults. Missing env vars fail loudly at startup
+    # rather than silently running with insecure placeholder values.
+    SECRET_KEY: str
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
-    # Database
-    DATABASE_URL: str = os.getenv(
-        "DATABASE_URL", "postgresql+asyncpg://postgres:postgres@db:5432/scheduler"
-    )
+    # Database — no fallback. If DATABASE_URL is not injected by ECS Secrets
+    # Manager the app will raise a validation error at import time.
+    DATABASE_URL: str
 
     # TikTok API
     TIKTOK_CLIENT_KEY: str = os.getenv("TIKTOK_CLIENT_KEY", "")

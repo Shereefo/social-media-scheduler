@@ -1,7 +1,14 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey
+import enum
+
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
+
+
+class UserRole(str, enum.Enum):
+    user = "user"
+    admin = "admin"
 
 
 class Post(Base):
@@ -36,6 +43,22 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
     is_superuser = Column(Boolean, default=False)
+
+    # Role-based access control — replaces the binary is_superuser check for
+    # new code. is_superuser is kept for backwards compatibility.
+    role = Column(Enum(UserRole), nullable=False, default=UserRole.user)
+
+    # Refresh token — only the hash is stored, never the raw token value.
+    # On each use the token is rotated: old hash deleted, new token issued.
+    refresh_token_hash = Column(String, nullable=True)
+    refresh_token_expires_at = Column(DateTime(timezone=True), nullable=True)
+
+    # Monotonic version counter for access token revocation.
+    # Encoding the version in the JWT payload means we can invalidate all
+    # outstanding tokens for a user (e.g. on logout or password change) by
+    # incrementing this value — no blocklist table needed.
+    token_version = Column(Integer, nullable=False, default=0)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
@@ -43,8 +66,6 @@ class User(Base):
     tiktok_access_token = Column(String, nullable=True)
     tiktok_refresh_token = Column(String, nullable=True)
     tiktok_open_id = Column(String, nullable=True)
-
-    # Added to explicitly set the timezone
     tiktok_token_expires_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationship with posts

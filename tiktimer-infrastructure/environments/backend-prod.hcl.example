@@ -1,0 +1,5 @@
+bucket         = "tiktimer-shared-tf-state-123456789012"
+key            = "prod/tiktimer-infrastructure.tfstate"
+region         = "us-east-2"
+dynamodb_table = "tiktimer-shared-tf-locks"
+encrypt        = true

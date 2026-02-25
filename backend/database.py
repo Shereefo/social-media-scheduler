@@ -1,11 +1,13 @@
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-# Database URL using the service name 'db' as hostname
-DATABASE_URL = "postgresql+asyncpg://postgres:postgres@db:5432/scheduler"
+from .config import settings
 
-# Create async engine
-engine = create_async_engine(DATABASE_URL, echo=True)
+# Read DATABASE_URL strictly from config — no hardcoded fallback.
+# If the ECS Secrets Manager injection fails, settings.DATABASE_URL
+# raises a ValidationError at startup rather than connecting silently
+# to a nonexistent host.
+engine = create_async_engine(settings.DATABASE_URL, echo=True)
 
 # Create session factory
 async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)

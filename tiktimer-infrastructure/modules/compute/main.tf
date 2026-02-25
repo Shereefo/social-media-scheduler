@@ -44,6 +44,30 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+# Allow the execution role to read the secrets it needs to inject into containers.
+# Scoped to only the two ARNs this environment uses — not a wildcard.
+resource "aws_iam_role_policy" "ecs_secrets_read" {
+  name = "${var.project_name}-${var.environment}-secrets-read"
+  role = aws_iam_role.ecs_task_execution_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "SecretsManagerRead"
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue"
+        ]
+        Resource = [
+          var.db_secret_arn,
+          var.app_secret_arn
+        ]
+      }
+    ]
+  })
+}
+
 # ECS Task Role (for application-specific permissions)
 resource "aws_iam_role" "ecs_task_role" {
   name = "${var.project_name}-${var.environment}-task-role"
@@ -143,18 +167,25 @@ resource "aws_ecs_task_definition" "app" {
         }
       ]
 
-      environment = [
+      # ECS resolves these ARNs at task launch and injects the values as
+      # environment variables. The secret value never appears in the task
+      # definition JSON — only the ARN is stored.
+      secrets = [
         {
-          name  = "ENVIRONMENT"
-          value = var.environment
+          name      = "DATABASE_URL"
+          valueFrom = "${var.db_secret_arn}:url::"
         },
         {
-          name  = "PORT"
-          value = tostring(var.container_port)
+          name      = "SECRET_KEY"
+          valueFrom = "${var.app_secret_arn}:SECRET_KEY::"
         },
         {
-          name  = "DATABASE_URL"
-          value = var.database_url
+          name      = "TIKTOK_CLIENT_KEY"
+          valueFrom = "${var.app_secret_arn}:TIKTOK_CLIENT_KEY::"
+        },
+        {
+          name      = "TIKTOK_CLIENT_SECRET"
+          valueFrom = "${var.app_secret_arn}:TIKTOK_CLIENT_SECRET::"
         }
       ]
 
@@ -192,8 +223,8 @@ resource "aws_ecs_task_definition" "migration" {
   family                   = "${var.project_name}-${var.environment}-migration"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = "256"  # 0.25 vCPU (minimal for migrations)
-  memory                   = "512"  # 0.5 GB RAM (minimal for migrations)
+  cpu                      = "256" # 0.25 vCPU (minimal for migrations)
+  memory                   = "512" # 0.5 GB RAM (minimal for migrations)
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn            = aws_iam_role.ecs_task_role.arn
 
@@ -210,10 +241,13 @@ resource "aws_ecs_task_definition" "migration" {
         {
           name  = "ENVIRONMENT"
           value = var.environment
-        },
+        }
+      ]
+
+      secrets = [
         {
-          name  = "DATABASE_URL"
-          value = var.database_url
+          name      = "DATABASE_URL"
+          valueFrom = "${var.db_secret_arn}:url::"
         }
       ]
 
@@ -410,17 +444,3 @@ resource "aws_appautoscaling_policy" "memory" {
     scale_out_cooldown = 60
   }
 }
-# Create an SSM Parameter for the database URL
-/*
-resource "aws_ssm_parameter" "database_url" {
-  name        = "/${var.project_name}/${var.environment}/database-url"
-  description = "Database connection URL for the ${var.project_name} application"
-  type        = "SecureString"
-  value       = var.database_url
-  
-  tags = {
-    Name        = "${var.project_name}-${var.environment}-database-url"
-    Environment = var.environment
-  }
-}
-*/

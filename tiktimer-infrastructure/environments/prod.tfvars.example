@@ -1,0 +1,11 @@
+environment         = "prod"
+aws_region          = "us-east-2"
+desired_count       = 3
+enable_waf          = true
+enable_guardduty    = true
+enable_security_hub = true
+db_multi_az         = true
+single_nat_gateway  = false
+enable_autoscaling  = true
+min_capacity        = 2
+max_capacity        = 8
