@@ -2,25 +2,22 @@
 
 ## 📚 Documentation Index
 
-### **Start Here**
-- **[README_FOR_NEXT_SESSION.md](./README_FOR_NEXT_SESSION.md)** - Quick start for new chat sessions
-
 ### **Architecture & Design**
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** - System design rationale, threat model, and trade-offs for the infrastructure & identity hardening work
 - **[CHANGES.md](./CHANGES.md)** - File-by-file change log for all 5 hardening phases with pre-apply checklist
 - **[architecture-diagram.html](./architecture-diagram.html)** - Visual Mermaid diagrams (CI/CD pipeline, infra layers, IAM roles, auth sequence)
 
 ### **CI/CD Pipeline**
-- **[CICD_IMPLEMENTATION_NOTES.md](./cicd/CICD_IMPLEMENTATION_NOTES.md)** - Complete implementation history and all issues fixed
-- **[MIGRATION_IMPLEMENTATION_SUMMARY.md](./cicd/MIGRATION_IMPLEMENTATION_SUMMARY.md)** - Database migration implementation guide
-- **[CI_PIPELINE_JOURNEY.md](./cicd/CI_PIPELINE_JOURNEY.md)** - Original CI pipeline notes
-- **[PIPELINE_SUMMARY.md](./cicd/PIPELINE_SUMMARY.md)** - Pipeline overview
-
-### **Development**
-- **[DEVELOPMENT_SESSION_SUMMARY.md](./development/DEVELOPMENT_SESSION_SUMMARY.md)** - Frontend development session notes
+- **[CICD_IMPLEMENTATION_NOTES.md](./cicd/CICD_IMPLEMENTATION_NOTES.md)** - Complete CI/CD implementation history and issues resolved
+- **[MIGRATION_IMPLEMENTATION_SUMMARY.md](./cicd/MIGRATION_IMPLEMENTATION_SUMMARY.md)** - Database migration guide
 
 ### **Reference**
+- **[DEPLOYMENT_DAY_GUIDE.md](./DEPLOYMENT_DAY_GUIDE.md)** - Step-by-step guide for running `terraform apply` and post-apply steps
 - **[QUICK_REFERENCE.md](./references/QUICK_REFERENCE.md)** - Essential commands, debugging, costs
+- **[DEPLOYMENT_CHECKLIST.md](./references/DEPLOYMENT_CHECKLIST.md)** - Pre-deploy checklist
+
+### **Archive**
+- **[archive/](./archive/)** - Older development session notes (TikTok OAuth, frontend deployment)
 
 ---
 
@@ -28,12 +25,10 @@
 
 **Understanding the architecture?** → [Architecture & Design Rationale](./ARCHITECTURE.md)
 
-**Deploying infrastructure?** → [Quick Reference](./references/QUICK_REFERENCE.md#-quick-start-commands)
+**What changed and why?** → [CHANGES.md](./CHANGES.md)
 
-**Pipeline failing?** → [CICD Notes - Issues Fixed](./cicd/CICD_IMPLEMENTATION_NOTES.md#-critical-issues-fixed)
+**Ready to deploy?** → [Deployment Day Guide](./DEPLOYMENT_DAY_GUIDE.md)
 
-**Testing migrations?** → [Migration Summary](./cicd/MIGRATION_IMPLEMENTATION_SUMMARY.md#-steps-to-test-this-implementation)
+**Need a command fast?** → [Quick Reference](./references/QUICK_REFERENCE.md)
 
-**New chat session?** → [README for Next Session](./README_FOR_NEXT_SESSION.md)
-
-**Need a command?** → [Quick Reference](./references/QUICK_REFERENCE.md)
+**Pipeline failing?** → [CICD Notes](./cicd/CICD_IMPLEMENTATION_NOTES.md)

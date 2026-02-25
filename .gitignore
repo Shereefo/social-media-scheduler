@@ -15,6 +15,9 @@ uploads/
 *.mov
 *.mp4
 
+# Claude Code tooling
+.claude/
+
 # Terraform
 .terraform/
 .terraform.lock.hcl
