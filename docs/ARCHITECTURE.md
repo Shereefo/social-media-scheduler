@@ -300,6 +300,8 @@ The pattern is intentional: the infrastructure code exists and is validated, so 
 
 ---
 
+## Architecture visualized: file:///Users/shereefmoez/social-media-scheduler/docs/architecture-diagram.html
+
 ## Future Work
 
 These items are known gaps, in priority order:
